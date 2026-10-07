@@ -4,7 +4,7 @@
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 fail=0
-for f in install.sh scripts/*.sh skills/*/*.sh; do
+for f in install.sh scripts/*.sh skills/*/*.sh tests/*.sh tests/fixtures/*.sh; do
   case "$f" in *.sh) ;; *) continue;; esac
   if head -1 "$f" | grep -q bash; then bash -n "$f" || fail=1; else sh -n "$f" || fail=1; fi
 done

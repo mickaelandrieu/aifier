@@ -9,6 +9,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: bash scripts/check.sh
+      - name: deterministic tests of the two collectors on synthetic repositories
+        run: bash tests/run.sh
       - name: smoke the installer and the collectors on this repository
         run: |
           AIFIER_SRC=. AIFIER_DIR=skills sh install.sh

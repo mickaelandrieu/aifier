@@ -40,8 +40,12 @@ update before stopping). Configuration of the cycle: [aifier.yml](aifier.yml).
 bash scripts/check.sh
 AIFIER_SRC=. AIFIER_DIR=skills sh install.sh
 bash skills/init/detect.sh . >/dev/null && bash skills/assess/probes.sh . >/dev/null
+bash tests/run.sh
 ```
 
 Run the two collectors against a second, classic repository before changing them: a change that
-only works on this repository is not a change. A skill ships only after a blind run
-(`scripts/blind-run.sh <repo> <skill>` prepares it); its friction list goes in the pull request.
+only works on this repository is not a change. `tests/run.sh` diffs their output on four synthetic
+repositories against `tests/expected/`; `UPDATE=1 bash tests/run.sh` regenerates the expected
+files after an intended change, and that diff is reviewed in the pull request. A skill ships only
+after a blind run (`scripts/blind-run.sh <repo> <skill>` prepares it); its friction list goes in
+the pull request.
