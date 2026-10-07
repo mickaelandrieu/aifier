@@ -1,8 +1,8 @@
 # Les onze phases du SDLC augmenté
 
-Cette page fixe le vocabulaire qu'emploient toutes les commandes aifier : les onze phases du SDLC
-augmenté et les concepts liés (context engineering, harness engineering, CDLC, issue-based
-development, context flywheel). Elle ne réinvente rien : elle numérote.
+Référence : https://www.sfeir.com/concepts/sdlc-augmente/ (et les concepts liés : context-engineering,
+harness-engineering, cdlc, issue-based-development, context-flywheel). Cette page fixe le vocabulaire
+qu'emploient toutes les commandes aifier. Elle ne réinvente rien : elle numérote.
 
 | N° | Phase | Temps | Ce qui s'y passe | Nature |
 |---|---|---|---|---|

@@ -18,3 +18,13 @@ Blocks between `{{#list}}` and `{{/list}}` repeat per item.
 An existing `AGENTS.md` or `CLAUDE.md` is never overwritten: `init` shows the difference and
 offers merge, side file or skip. On merge, `init` redistributes the existing content between the
 constitution and the area guides; `/context` later audits what is stale or duplicated.
+
+## Placeholders
+
+The keys a template or a skill may use, each with one source in `aifier.yml`: `project`,
+`project_summary`, `repo`, `forge`, `engines`, `language`, `default_branch`, `target_branch`,
+`label_prefix` (no colon, the skills add it), `required_checks`, `ci_file`, `guards`,
+`protected_paths`, `date`, `memory.rules`, `memory.decisions`, `memory.handoff` (paths without a
+trailing slash); inside an `areas` block: `name`, `dir`, `stack`, `path`, `gates.lint`,
+`gates.typecheck`, `gates.test`, `gates.build`; in an area guide: `area.name`, `area.dir`,
+`area.summary`, `area.layout`, `area.commands`, `area.patterns`.

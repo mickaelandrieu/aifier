@@ -7,7 +7,6 @@ rendered:
   - .github/ISSUE_TEMPLATE/change.yml
   - .github/PULL_REQUEST_TEMPLATE.md
   - .github/workflows/check.yml
-  - scripts/check.sh
   - docs/learned-rules.md
   - docs/decisions/README.md
   - docs/decisions/0000-template.md

@@ -90,7 +90,7 @@ values in `aifier.yml` win over the four below when they differ), from the repos
 capture the tail of each real output:
 
 ```
-$ bash scripts/check.sh
+$ cargo fmt --check && cargo clippy --all-targets -- -D warnings
 $ AIFIER_SRC=. AIFIER_DIR=skills sh install.sh && bash skills/init/detect.sh . >/dev/null && bash skills/assess/probes.sh . >/dev/null && bash tests/run.sh
 ```
 
