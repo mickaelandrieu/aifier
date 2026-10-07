@@ -30,28 +30,19 @@ If your shell aborts a command on an unmatched glob (zsh does), run `setopt +o n
 `shopt -s nullglob` in bash. If a command-rewriting proxy sits in front of your shell and an `ls`
 prints nothing for files you know exist, use the proxy's raw mode.
 
-Inventory, collected once:
+Inventory, collected once by the deterministic collector next to this file. It reads the repository
+and the forge (when `gh` answers), never executes project code, and prints one Markdown section per
+topic (identity, context files, harnessability, tests, CI pipelines, git activity over the last 90
+days or the last 100 commits when the window is sparse, forge data, aifier footprint). Every line it
+prints is a citable proof; cite it by section and line in the report.
 
 ```bash
-EXCL='-not -path */node_modules/* -not -path */.venv/* -not -path */site-packages/* -not -path */.git/* -not -path */worktrees/*'
-# agent engines and context
-ls AGENTS.md CLAUDE.md GEMINI.md .cursorrules .github/copilot-instructions.md 2>/dev/null
-find . -name AGENTS.md $EXCL | head -30
-find . -path '*/skills/*/SKILL.md' $EXCL | head -80
-ls -d .claude .opencode .agents .cursor .pi 2>/dev/null
-awk '/^---$/{c++; next} c==1 && /^(name|description):/' <each SKILL.md>
-# forge files
-ls .github .github/ISSUE_TEMPLATE .github/workflows .gitlab .gitlab/issue_templates 2>/dev/null
-ls .gitlab-ci.yml cloudbuild.yaml Jenkinsfile .circleci bitbucket-pipelines.yml 2>/dev/null; ls -d .cloudbuild* 2>/dev/null
-ls CONTRIBUTING.md CHANGELOG.md CODEOWNERS .github/CODEOWNERS RELEASE.md SECURITY.md 2>/dev/null
-ls docs docs/adr docs/decisions docs/plans docs/runbooks docs/troubleshooting docs/deployment docs/postmortems docs/incidents 2>/dev/null
-ls .github/dependabot.yml renovate.json 2>/dev/null; ls .renovaterc* 2>/dev/null
-# gates and harnessability
-ls Makefile justfile Taskfile.yml package.json pyproject.toml setup.cfg tox.ini go.mod Cargo.toml pom.xml 2>/dev/null; ls build.gradle* 2>/dev/null
-find . -maxdepth 3 \( -name package.json -o -name pyproject.toml -o -name tsconfig.json -o -name mypy.ini -o -name pyrightconfig.json -o -name vitest.config.* -o -name jest.config.* \) $EXCL
-ls commitlint.config.* .pre-commit-config.yaml lefthook.yml 2>/dev/null; ls -d .commitlintrc* .husky .githooks 2>/dev/null; git config core.hooksPath
-ls .env.example .devcontainer 2>/dev/null; find . -maxdepth 2 -name '.env.example' $EXCL
+bash "<directory of this SKILL.md>/probes.sh" "$REPO" > "$OUT/probes.md"
 ```
+
+Read `$OUT/probes.md` in full before anything else. Criteria whose evidence the collector does not
+reach (reviews on individual PRs, check runs as reported, plans on open issues, grep-only
+criteria) use the samples below.
 
 Forge samples (skip when the forge is unavailable; wrap each call in `timeout 60`):
 
@@ -80,11 +71,9 @@ Do not run `gh run list`: it hangs on repositories whose CI is not GitHub Action
 any CI provider appear in `statusCheckRollup`. `$OUT` is a directory **outside** the audited
 repository.
 
-Git samples (always):
+Git samples the collector does not cover:
 
 ```bash
-git log --format='%s' -100
-git log -1 --format=%cd --date=short -- AGENTS.md
 git log -1 --format=%cd --date=short -- <rule catalogue path>
 ```
 

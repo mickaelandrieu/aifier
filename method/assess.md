@@ -273,6 +273,19 @@ Axes : C 2,1 · W 1,4 · G 2,6 · H 2,0
 Le détail cite la preuve pour chaque note, dans l'esprit de la discipline de preuve que la grille
 évalue elle-même. Un critère sans preuve citée n'a pas de note.
 
+## Calibration
+
+La grille se vérifie sur deux dépôts témoins avant d'être tenue pour juste. Les résultats restent
+hors du dépôt aifier ; seules les attentes figurent ici.
+
+| Témoin | Profil | Verdict attendu | Si le verdict diffère |
+|---|---|---|---|
+| Projet avancé | constitution en carte, guides par zone, skills et catalogue de règles vivants, gates en CI avec preuve, workflow à labels, revues multi-angles | **Cycle outillé**, proche de gouverné ; phases 8, 9 et 10 en retrait | la grille ou les sondes sont trop sévères |
+| Projet classique | CI de tests et linter présents, un fichier de contexte monolithique, pas de template d'issue, pas de catalogue, fusion sans revue requise | **Prêt pour le Setup** au mieux, avec 1.1 et 6.1 en écarts bloquants | la grille note la présence et non la tenue |
+
+Un écart entre attendu et obtenu est un constat sur la grille, à corriger dans la grille, jamais en
+ajustant une note à la main.
+
 ## Ce que la grille ne mesure pas
 
 - la qualité du code ou de l'architecture en soi : seulement leur **harnessability** ;

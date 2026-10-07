@@ -1,1 +1,0 @@
-../../method/assess-grid.md

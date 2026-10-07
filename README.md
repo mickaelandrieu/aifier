@@ -147,7 +147,9 @@ adapters/        per-engine rendering: layouts, hooks, memory for Claude Code, o
 ## Status
 
 Early design, documentation first. The method, the `assess` grid and the `/assess` skill are
-written and the skill has been run end to end on a production codebase. The generator is
+written and the skill has been run end to end on a production codebase. Its evidence collector,
+`skills/assess/probes.sh`, runs on its own against any repository (`git`, plus `gh` and `jq` for
+the forge section). The generator is
 specified in [issue #1](https://github.com/mickaelandrieu/aifier/issues/1); the other skills in
 issues #3 to #6. All of it is distilled from an agent framework that has run for months on a
 production GenAI platform, with a label-driven workflow, a proof discipline and a catalogue of
@@ -160,14 +162,3 @@ on your own codebase before the generator lands.
 
 [MIT](LICENSE).
 
-## Trying `assess` today
-
-The `assess` skill is runnable from a checkout. In any coding agent that reads skills
-(Claude Code, opencode, pi), point it at `skills/assess/SKILL.md` and give it the path of the
-repository to audit. The evidence collector alone, useful on its own:
-
-```bash
-bash skills/assess/probes.sh /path/to/repo
-```
-
-It needs `git`, and `gh` + `jq` for the GitHub section (which degrades gracefully without them).
