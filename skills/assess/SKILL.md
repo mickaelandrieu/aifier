@@ -26,7 +26,10 @@ Record the sources: `git` (always) and `forge` (when `gh` or `glab` answers). Wi
 a criterion whose levels 0 to 2 are visible in the repository (a template, a written rule) is
 rated from the repository and capped at 2; a criterion whose every level needs the forge (branch
 protection, reviews, samples of issues) is **unrated**, never 0. Without a PR sample, the merge
-commits on the default branch stand in for it: say "proxy sample" in the report. Note today's date: a proof older than 90 days caps its criterion at 2.
+commits on the default branch stand in for it: say "proxy sample" in the report. Note today's date: a proof older than 90 days caps its criterion at 2. A repository with no
+commit in 90 days is **dormant**: say it once in the risks with the last commit date; apply the
+cap to criteria that need recent practice (samples, CI runs), not to declared artefacts whose
+presence is the level sought.
 
 If your shell aborts a command on an unmatched glob (zsh does), run `setopt +o nomatch` first, or
 `shopt -s nullglob` in bash. If a command-rewriting proxy sits in front of your shell and an `ls`
@@ -140,6 +143,7 @@ axis: **H** harnessability, **C** context, **W** workflow, **G** verification ga
 - **0.4 Agent engines detected** (informative, not scored). Engine directories found; tracked or ignored; generic or project-specific content; stale working copies.
 - **0.5 Code harnessability** (H). Strict typing configured (`tsconfig` `"strict": true`, `mypy`/`pyright` section, typed language), linter and formatter configured, module boundaries (workspaces, packages). 3 when typing runs in CI (check run visible).
 - **0.6 Environment bootstrap** (H). `Makefile`, `justfile`, `scripts/`, `.env.example`, devcontainer, README install section. 3 when the CI invokes the same script or target, including inside a container image.
+- **0.8 No secret in the repository** (blocking, H). Tracked files hold no API key, password, token or session secret; `.env*` ignored; a secret scanner configured. 0 when a real secret is tracked; 1 when demo values sit hard-coded in configuration (compose, CI) with no scanner; 2 when nothing is tracked and `.env.example` carries names only; 3 with a scanner blocking in CI or a hook. The probes print candidate lines: read each before calling it a secret.
 - **0.7 Delegation scope** (W). A written statement of what agents do not do: merge, decide intent, pick architecture, touch safety-critical zones. 3 when agent instructions explicitly stop at the gates.
 
 ### Phase 1 · Define (human gate: intent)
@@ -233,7 +237,7 @@ Verdict, from phases, not from the overall mean:
 
 | Verdict | Condition |
 |---|---|
-| **Not ready** | a blocking criterion at 0 in phase 0, 1 or 4 |
+| **Not ready** | a blocking criterion at 0 in phase 0, 1 or 4 (0.8 at 0 is enough) |
 | **Ready for Setup** | no blocking criterion at 0; phases 0, 1 and 4 at least emerging |
 | **Tooled cycle** | phases 0 to 6 at least tooled (≥ 2) and criterion 7.1 ≥ 2 |
 | **Governed cycle** | phases 0 to 7 tooled, at least four of them governed (≥ 2.8), and phase 9 ≥ 2 |
