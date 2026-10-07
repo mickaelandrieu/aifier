@@ -1,312 +1,92 @@
 ---
 name: assess
-description: Read-only maturity audit of a repository against the eleven phases of the AI-augmented SDLC. Scores each phase 0-3 from evidence (files, git history, forge), gives a verdict, and lists prioritised gaps and risks tied to the action that closes them. Argument - path to the repository (default - current directory).
+description: Read-only maturity audit of a repository against the AI-augmented SDLC grid (eleven phases, harnessability and context axes). Run the deterministic probes, score every criterion from captured evidence, and write a prioritised report. Use when asked to assess, audit, or measure how ready a project is for AI agents, before and after `init`.
 ---
 
-You are running `assess`. You audit the repository at `$ARGUMENTS` (default: the current directory)
-and produce a maturity report. You are self-contained: do not delegate to sub-agents. You are
-**read-only**: never write into the audited repository, never run its build, tests or scripts, never
-change its labels, issues or pull requests. Only `git` reads, `gh`/`glab` reads and file reads.
+# aifier assess
 
-The report is only as good as its evidence. Every score cites what you read or ran. A score without
-a cited proof is not a score: leave the criterion **unrated** and say why.
+Measure where a repository stands against the AI-augmented SDLC and say what to fix first.
+This command never modifies the target repository except to write its report.
 
-## Step 1 — Establish the sources
+## Inputs
 
-```bash
-cd "$REPO"
-git rev-parse --show-toplevel && git branch --show-current
-git log -1 --format='%H %cd' --date=short
-ORIGIN=$(git remote get-url origin 2>/dev/null)
-SLUG=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
-DEFAULT=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null)
-```
+- `$ARGUMENTS`: optional path to the repository to assess. Default: the current working
+  directory's git root (`git rev-parse --show-toplevel`).
+- `grid.md` next to this file: the evaluation grid. It is the only source of criteria, scales,
+  weights and report format. Read it in full before scoring.
+- `probes.sh` next to this file: the deterministic evidence collector.
 
-Record the sources: `git` (always) and `forge` (when `gh` or `glab` answers). Without the forge,
-every criterion that needs branch protection, issue or PR samples, reviews or check runs is
-**unrated**, never 0. Note today's date: a proof older than 90 days caps its criterion at 2.
+## Step 1 — Collect evidence
 
-If your shell aborts a command on an unmatched glob (zsh does), run `setopt +o nomatch` first, or
-`shopt -s nullglob` in bash. If a command-rewriting proxy sits in front of your shell and an `ls`
-prints nothing for files you know exist, use the proxy's raw mode.
-
-Inventory, collected once:
+Run the probes once and keep the full output; every score below must cite a line from it.
 
 ```bash
-EXCL='-not -path */node_modules/* -not -path */.venv/* -not -path */site-packages/* -not -path */.git/* -not -path */worktrees/*'
-# agent engines and context
-ls AGENTS.md CLAUDE.md GEMINI.md .cursorrules .github/copilot-instructions.md 2>/dev/null
-find . -name AGENTS.md $EXCL | head -30
-find . -path '*/skills/*/SKILL.md' $EXCL | head -80
-ls -d .claude .opencode .agents .cursor .pi 2>/dev/null
-awk '/^---$/{c++; next} c==1 && /^(name|description):/' <each SKILL.md>
-# forge files
-ls .github .github/ISSUE_TEMPLATE .github/workflows .gitlab .gitlab/issue_templates 2>/dev/null
-ls .gitlab-ci.yml cloudbuild.yaml Jenkinsfile .circleci bitbucket-pipelines.yml 2>/dev/null; ls -d .cloudbuild* 2>/dev/null
-ls CONTRIBUTING.md CHANGELOG.md CODEOWNERS .github/CODEOWNERS RELEASE.md SECURITY.md 2>/dev/null
-ls docs docs/adr docs/decisions docs/plans docs/runbooks docs/troubleshooting docs/deployment docs/postmortems docs/incidents 2>/dev/null
-ls .github/dependabot.yml renovate.json 2>/dev/null; ls .renovaterc* 2>/dev/null
-# gates and harnessability
-ls Makefile justfile Taskfile.yml package.json pyproject.toml setup.cfg tox.ini go.mod Cargo.toml pom.xml 2>/dev/null; ls build.gradle* 2>/dev/null
-find . -maxdepth 3 \( -name package.json -o -name pyproject.toml -o -name tsconfig.json -o -name mypy.ini -o -name pyrightconfig.json -o -name vitest.config.* -o -name jest.config.* \) $EXCL
-ls commitlint.config.* .pre-commit-config.yaml lefthook.yml 2>/dev/null; ls -d .commitlintrc* .husky .githooks 2>/dev/null; git config core.hooksPath
-ls .env.example .devcontainer 2>/dev/null; find . -maxdepth 2 -name '.env.example' $EXCL
+bash "<dir of this skill>/probes.sh" "<repo path>" > /tmp/aifier-probes.md
 ```
 
-Forge samples (skip when the forge is unavailable; wrap each call in `timeout 60`):
+Then read `/tmp/aifier-probes.md`. If the `GitHub (gh)` section says gh is unavailable, mark
+D2, D3, D5, R1, R4 and L1 as `non observable` and compute phase scores on the remaining criteria.
 
-```bash
-gh label list --limit 100 --json name -q '.[].name'
-gh issue list --state closed --limit 20 --json number,title,body,labels,closedAt > "$OUT/issues.json"
-gh pr list --state merged --limit 20 --json number,title,body,files,baseRefName,mergedAt,mergedBy,author,closingIssuesReferences > "$OUT/prs.json"
-# protection of EVERY branch that received a sampled PR, plus the default branch; encode "/" as %2F
-for b in $(jq -r '.[].baseRefName' "$OUT/prs.json" | sort -u) "$DEFAULT"; do
-  gh api "repos/$SLUG/branches/$(printf %s "$b" | sed 's|/|%2F|g')/protection" 2>&1 | head -60
-done
-gh api "repos/$SLUG/rulesets" 2>/dev/null | head -40
-# reviews and comments on the 6 most recent sampled PRs
-for n in $(jq -r '.[].number' "$OUT/prs.json" | head -6); do
-  gh api "repos/$SLUG/pulls/$n/reviews" --jq '.[] | [.user.login, .state] | @tsv'
-  gh api "repos/$SLUG/pulls/$n/comments" --jq 'length'
-  gh api "repos/$SLUG/issues/$n/comments" --jq '.[] | .user.login' | sort | uniq -c
-done
-# CI as actually reported, versus what protection requires
-gh pr view $(jq -r '.[0].number' "$OUT/prs.json") --json statusCheckRollup -q '.statusCheckRollup[] | [.name // .context, .conclusion // .state, .completedAt // .startedAt] | @tsv'
-# plans live on open or epic issues, not in the closed sample
-gh search issues --repo "$SLUG" "Implementation plan" OR "Chosen approach" OR "Approach A" --limit 10 --json number,title,updatedAt
-```
+The probes cover what can be detected mechanically. For criteria that need reading (C1 quality of
+the constitution, D1 template content, R2 checklist, K4 detection methods, X2 deprecation
+procedure), open the file the probes located and judge from its content. Do not open more than
+twenty files; the audit is a measurement, not an exploration.
 
-Do not run `gh run list`: it hangs on repositories whose CI is not GitHub Actions. Check runs from
-any CI provider appear in `statusCheckRollup`. `$OUT` is a directory **outside** the audited
-repository.
+## Step 2 — Score every criterion
 
-Git samples (always):
+For each criterion of the grid, in order (H, C, then phases 0 to 10):
 
-```bash
-git log --format='%s' -100
-git log -1 --format=%cd --date=short -- AGENTS.md
-git log -1 --format=%cd --date=short -- <rule catalogue path>
-```
+1. Quote the evidence: the probe line or file excerpt that supports the score.
+2. Assign the level 0 to 3 using the grid's `0` and `3` anchors. Interpolate 1 and 2 as
+   `ad hoc` and `formalised`, as defined in the grid's scale.
+3. Apply the two inversions the grid imposes: a human gate that an automation bypasses (D4, P3,
+   R4, L1) scores lower, not higher; a control that is declared but not executed scores at most 2.
+4. If the evidence is missing because the probe cannot see it (Ops tooling outside the
+   repository, a GitHub API refusal), write `non observable` instead of 0 and say where to look.
 
-Scoring the samples by hand is slow and irreproducible. Write a short throwaway script (any
-language, in `$OUT`) that computes, from `issues.json` and `prs.json`: share of issues with a
-problem / expected / acceptance structure; share with an acceptance-criteria section; share of PRs
-touching a test path (`test`, `tests`, `spec`, `__tests__`, `*.test.*`, `*_test.*`); median changed
-files; share with `closingIssuesReferences` **or** a `Closes|Fixes|Resolves #N` body match; merger
-versus author; base branches. Quote the numbers in the report.
+Never score from assumption. A criterion with no evidence line and no opened file is `0` with the
+note `no evidence found`, which is different from `non observable`.
 
-Grep hints for criteria whose evidence has no standard location (search `docs/`, deployment and
-infrastructure directories, application config):
+## Step 3 — Compute
 
-| Criterion | Grep for |
-|---|---|
-| 7.3 rollback | `rollback`, `roll back`, `revert`, `down migration`, `forward-only` |
-| 7.4 progressive delivery | `canary`, `traffic`, `percent`, `feature.?flag`, `unleash`, `launchdarkly`, `flagsmith`, `growthbook` |
-| 8.1 observability | `structlog`, `json.?log`, `opentelemetry`, `otel`, `prometheus`, `datadog`, `sentry`, `langfuse`, `dashboard`, `alert` |
-| 8.2 runbooks | `runbook`, `on-call`, `oncall`, `troubleshoot`, `recover` |
-| 8.3 observation | `observ`, `bake`, `soak`, `monitor.*days` |
-| 9.1 postmortems | `postmortem`, `post-mortem`, `incident`, `blameless`, `RCA` |
-| 10.1 deprecation | `deprecat`, `Sunset`, `/v[0-9]+/`, `BREAKING` |
-| 8.4 swallowed errors | lint config: ruff `S110`, `S112`, `BLE001`; eslint `no-empty`; detection greps in the rule catalogue |
+- Phase score = arithmetic mean of its scored criteria, one decimal. `non observable` criteria are
+  excluded from the mean and listed under the phase.
+- Global score = weighted mean of phase and axis scores with the grid's weights.
+- Global level from the grid's table: Classique, Assisté, Augmenté, Compound.
 
-## Step 2 — Score each criterion
+Show the computation for the global score in one line so a reader can check it.
 
-Rubric, identical for every criterion:
+## Step 4 — Prioritise gaps
 
-| Score | Meaning |
-|---|---|
-| 0 | absent: no trace in the repository or the forge |
-| 1 | ad hoc: traces (commits, issues, scattered files) but nothing written or tooled; or tooled but demonstrably never executed |
-| 2 | declared: written and tooled (file, template, config, command) but no proof it applies |
-| 3 | governed: declared **and** proven by evidence less than 90 days old (CI run, conforming sample of issues or PRs, active branch protection on the branches that actually receive merges) |
+Order the gaps exactly as the grid prescribes:
 
-Conventions that remove judgement calls:
+1. missing or bypassed human gates (D4, P3, R4, L1) scored 0 or 1;
+2. criteria in weight-3 phases (Define, Plan, Verify, Compound-1) scored 0 or 1;
+3. everything else by phase weight descending, then by score ascending.
 
-- Percent thresholds are **inclusive**: "70 %" means 14 of 20 passes.
-- **Branch protection** is rated on the branches that received the sampled PRs, not only the
-  default branch. If the default branch is protected but the branch receiving most merges is not,
-  the protection criteria (3.1, 5.1, 5.4, 5.5, 7.1) are capped at 2 and the fact is a **risk**.
-- A review run by an agent that the PR author launched is **not** an independent review.
-- A **framework with nothing declared** (a flag enum with zero flags, coverage thresholds never
-  run in CI, a required check whose name no longer matches any reported check) is 1, not 2.
-- A constitution that **restates a skill's rules** instead of pointing to the skill is duplicated
-  context: cap 0.3 at 2.
-- Structure in issues counts whether it comes from the forge template or from a qualification agent
-  that rewrote the issue: what is rated is the written contract, not its origin.
-- Phase level: absent (< 1), emerging (1 to 1.9), tooled (2 to 2.7), governed (≥ 2.8).
+For each gap give one line: criterion id, what was found, the evidence, and whether `init` or
+`gates` can close it (`init` installs configuration, templates, skills and rules; `gates`
+declares and verifies lint, typecheck, tests and build). Keep the list to the fifteen most
+valuable gaps; the full detail table carries the rest.
 
-Aggregation: phase score = mean of rated criteria, one decimal. A **blocking** criterion at 0 caps
-its phase at 1. Unrated and informative criteria are excluded from the mean. Each criterion has an
-axis: **H** harnessability, **C** context, **W** workflow, **G** verification gates.
+## Step 5 — Write the report
 
-### Phase 0 · Setup
-
-- **0.1 Agent constitution** (blocking, C). Root `AGENTS.md` or equivalent. 1 if generated boilerplate or more than 300 lines of prose; 2 if a short map pointing to area guides; 3 if every referenced file exists and the file changed in the last 90 days.
-- **0.2 Area guides** (C). One guide per sub-project in a multi-stack repo. 3 when guides state checkable rules, not descriptions.
-- **0.3 Knowledge packaged as skills** (C). `SKILL.md` directories with `name` and `description`. 3 when loaded by identifiable agents or commands and the constitution points to them rather than restating them.
-- **0.4 Agent engines detected** (informative, not scored). Engine directories found; tracked or ignored; generic or project-specific content; stale working copies.
-- **0.5 Code harnessability** (H). Strict typing configured (`tsconfig` `"strict": true`, `mypy`/`pyright` section, typed language), linter and formatter configured, module boundaries (workspaces, packages). 3 when typing runs in CI (check run visible).
-- **0.6 Environment bootstrap** (H). `Makefile`, `justfile`, `scripts/`, `.env.example`, devcontainer, README install section. 3 when the CI invokes the same script or target, including inside a container image.
-- **0.7 Delegation scope** (W). A written statement of what agents do not do: merge, decide intent, pick architecture, touch safety-critical zones. 3 when agent instructions explicitly stop at the gates.
-
-### Phase 1 · Define (human gate: intent)
-
-- **1.1 Issue templates** (blocking, W). Forge issue templates. 2 with fields for problem, expected behaviour, acceptance criteria; 3 when 70 % or more of the 20 sampled issues carry that structure, from the template or from a qualification rewrite.
-- **1.2 Two audiences** (W). Business-readable top (problem, impact, observable criteria), technical analysis folded below. 3 when the sample respects it.
-- **1.3 Observable acceptance criteria** (W). "When X, then Y", checkable without reading code. 3 when present in 70 % or more of sampled closed issues.
-- **1.4 Tooled qualification** (W). A command or skill that rewrites a raw issue into the contract, and a workflow state (label) for "qualified". 3 when the state appears on recent issues.
-- **1.5 Human stop on intent** (W). The qualified issue waits for human validation before plan or build. 3 when a label materialises the wait and automation does not pick up issues that have not passed it.
-
-### Phase 2 · Plan (human gate: architecture)
-
-Evidence lives on open or epic issues and in issue comments, not in the closed sample: use the
-`gh search issues` call above and read the matching comments.
-
-- **2.1 Architecture decisions recorded** (C). ADRs in `docs/adr/` or `docs/decisions/`. 3 with a template and one ADR in the last 90 days.
-- **2.2 Alternative approaches** (W). A command or skill producing two or three approaches that differ in strategy, with trade-offs and a recommendation. 3 when a plan posted in the last 90 days shows them.
-- **2.3 Stop at the gate** (blocking, W). The planner never builds; a human chooses (comment, label, "chosen approach" field). 3 when a human arbitration is visible on a recent issue.
-- **2.4 Learned rules consulted at plan time** (C). The planner loads the rule catalogue. 3 when a recent plan cites a rule.
-- **2.5 Grounded claims** (C). Plan claims tagged verified (`file:line`) or inferred. 3 when applied in a recent plan.
-
-### Phase 3 · Build
-
-- **3.1 Branching and protected base** (W). Written branch convention; protection on every branch that received sampled PRs. 3 when direct pushes and force pushes are blocked there and administrators are not exempt.
-- **3.2 Conventional commits** (W). Ratio over the last 100 commits: 0 below 30 %, 1 below 70 %, 2 at 70 % or more, 3 at 90 % or more or enforced by a hook or CI.
-- **3.3 Written code conventions** (C). Style guides per language, linter and formatter config, `CODEOWNERS`. 3 when loaded by build agents.
-- **3.4 Rule catalogue loaded at build** (C). 3 when loaded and the catalogue changed in the last 90 days.
-- **3.5 Tests are part of the change** (G). Share of the 20 last merged PRs touching test paths: 0 below 20 %, 1 below 50 %, 2 at 50 % or more, 3 at 70 % or more with the rule written.
-- **3.6 One slice per PR** (W). Median changed files over the sample and linked issues (API references **or** body keyword). 2 when median under 20 files with a linked issue on most PRs; 3 when the link is present on 90 % or more.
-
-### Phase 4 · Verify
-
-- **4.1 Gates declared** (blocking, G). Lint, typecheck, test and build-or-package commands discoverable in manifests, `Makefile`, `justfile`. A backend without a build step counts the three families it has. 2 when every sub-project declares its families; 3 when each sub-project exposes one documented command that runs them all, or the root does.
-- **4.2 Gates run in CI** (G). CI config runs the same commands and a recent check run succeeded. 3 when the required status checks in branch protection match the names actually reported in `statusCheckRollup`.
-- **4.3 Local / CI parity** (G). CI calls the commands the docs give locally; an environment preflight exists. 3 when the preflight is written and required before any verdict.
-- **4.4 Coverage measured** (G). 1 when thresholds exist but no CI step runs coverage; 2 when CI measures it; 3 when a threshold blocks.
-- **4.5 Proof discipline** (G). Agent instructions require captured command output and a `BLOCKED` verdict when a check cannot run; the PR template has a validation section. 3 when 70 % or more of sampled PRs contain command output.
-- **4.6 Behavioural tests** (G). A written rule against implementation-coupled tests. 3 when it is in the review checklist with a blocking consequence.
-
-### Phase 5 · Review
-
-- **5.1 Review required before merge** (blocking, W). Protection on the merge-receiving branches requires at least one approval; `CODEOWNERS`. 3 when sampled PRs show approving reviews by someone other than the author.
-- **5.2 Written review checklist** (C). Architecture, quality, security, coverage, test quality; a report template. 3 when loaded by review agents.
-- **5.3 Automated review** (G). A command or skill posting findings on PRs, several angles. 3 when findings are visible on sampled PRs (inline comments or a summary comment).
-- **5.4 PR health gate** (G). No approval possible with conflicts or failing checks. 3 when enforced by protection on the merge-receiving branches or by automated review with visible effect.
-- **5.5 Authors do not approve themselves** (W). Readiness is never set by whoever produced the PR, human or agent run by the author. 3 when the sample shows readiness set by an independent party.
-- **5.6 Reviews propose rules** (W). The review process asks whether a finding should become a learned rule. 3 when a rule added in the last 90 days traces to a review (commit or PR that introduced it).
-
-### Phase 6 · Compound-1 (capitalisation before release)
-
-- **6.1 Learned-rules catalogue** (blocking, C). One canonical file of numbered rules with severity, rule, wrong example, right example, detection. 1 for scattered notes; 3 when each code-level rule has an executable detection (process rules may have a prose detection).
-- **6.2 Capture command** (W). Extracts lessons, de-duplicates against the catalogue, persists. 3 when the catalogue received a rule in the last 90 days.
-- **6.3 Reinjection** (C). Catalogue loaded by plan, build and review agents. 2 for one of them, 3 for all three.
-- **6.4 Rule quality** (C). Each rule is a repeatable pattern, not a closed ticket or a lint rule. 2 when the admission criterion is written; 3 when a sample of rules conforms.
-- **6.5 A clean session yields nothing** (informative, not scored). Report whether it is written that the absence of a lesson is a valid outcome.
-
-### Phase 7 · Ship (human gate: acceptance)
-
-- **7.1 Only a human merges** (blocking, W). No `merge` in agent instructions, protection on merge-receiving branches, no auto-merge. 3 when no bot appears among sampled merge authors and protection holds on those branches.
-- **7.2 Release checklist** (W). Release process documented, release automation. 3 when followed in recent tags or notes.
-- **7.3 Rollback written cold** (W). Documented rollback per change type (code, schema, config). 3 when tested or referenced in risky PRs.
-- **7.4 Progressive delivery** (H). Feature flags, canary, traffic percentage. 1 when a flag framework exists with no declared flag; 3 when used on a recent delivery.
-- **7.5 Changelog** (C). Current as of the last tag. 3 when generated from commits or PRs.
-
-### Phase 8 · Ops
-
-Often outside the repository: rate what is visible, leave the rest unrated.
-
-- **8.1 Observability configured** (H). Structured logs, metrics, traces in application config; dashboards and alerts referenced. 3 with documented dashboards and alert policies.
-- **8.2 Runbooks** (C). Troubleshooting or runbook pages, recovery procedures. 3 when updated in the last 90 days.
-- **8.3 Observation period** (W). Written: a delivery is observed 7 to 14 days before flag removal or closure. 3 with a trace on a recent delivery.
-- **8.4 Errors never swallowed** (G). Written rule against silent exceptions; detection by lint or learned rule. 3 with executable detection running in a hook or CI.
-
-### Phase 9 · Compound-2 (capitalisation from production)
-
-- **9.1 Postmortems** (C). Blameless template, incident directory. 3 with a postmortem in the last 90 days.
-- **9.2 From incident to rule** (W). The capture command has an incident mode asking why pre-release gates missed it. 3 when a catalogue rule cites an incident.
-- **9.3 Back to Plan** (C). 2 when production rules share the Compound-1 catalogue loaded by the planner; 3 with a plan citing an incident rule.
-
-### Phase 10 · Deprecation
-
-- **10.1 Deprecation policy** (C). API versioning, deprecation markers, announced delay. 3 when applied on a recent removal.
-- **10.2 Flag and dead-code removal** (W). Cleanup issues or label, removal date in flag definitions. 3 with removals visible in recent history.
-- **10.3 Dependency hygiene** (H). Automated update tool, or vulnerability audit blocking in CI. 2 for one of them; 3 for both, or one plus update PRs merged in the last 90 days.
-
-## Step 3 — Verdict, axes, gaps, risks
-
-Axis means: average the rated criteria per axis (H, C, W, G).
-
-Verdict, from phases, not from the overall mean:
-
-| Verdict | Condition |
-|---|---|
-| **Not ready** | a blocking criterion at 0 in phase 0, 1 or 4 |
-| **Ready for Setup** | no blocking criterion at 0; phases 0, 1 and 4 at least emerging |
-| **Tooled cycle** | phases 0 to 6 at least tooled (≥ 2) and criterion 7.1 ≥ 2 |
-| **Governed cycle** | phases 0 to 7 tooled, at least four of them governed (≥ 2.8), and phase 9 ≥ 2 |
-
-**Gaps**: every criterion scored below 2. Order: blocking criteria first, in phase order; then
-phases 0 to 2; then phases 4 and 5; then the rest. For each gap: the missing proof, a realistic
-target (usually 2), and what closes it: `init` (constitution, labels, templates, skills, catalogue),
-`gates` (gate detection, CI parity, preflight, proof discipline), `context` (stale or duplicated
-context), `compound` (rule capture), or a human action when no command applies (branch protection,
-observability, release process).
-
-**Risks**: findings that do not lower a score below 2 but undermine several criteria at once. Always
-report: a merge-receiving branch without protection; required checks whose names match nothing
-reported; force pushes allowed or administrators exempt; readiness labels set by the author's own
-agent; coverage configured but never run. Risks go in their own section, before the detail.
-
-## Step 4 — Report
-
-Write the report in the language of the repository's README (default English). Samples may be in
-another language: make your regexes cover both. Write to standard output and, if the caller gave an
-output path, to that file **outside** the audited repository. Format:
+Write the report with the grid's `Format du rapport`, in the language of the target
+repository's README (French if the README is in French, otherwise English), to:
 
 ```
-# assess · <repo> · <date>
-
-Verdict: <level>                 Sources: git + forge | git only
-Default branch: <name>           Merge-receiving branches in sample: <names>
-Last commit: <date>              90-day window starts: <date>
-
-Verdict reasoning: <one line citing the phases and criteria that decided it>
-
-| Phase | Score | Level | Blocking |
-|---|---|---|---|
-| 0 Setup | 2.4 | tooled | 0.1 at 2 |
-| ... | | | |
-
-Axes: C <n> · W <n> · G <n> · H <n>
-Engines detected: <0.4 findings>
-
-## Prioritised gaps
-1. [1.1 blocking] Issue templates missing — proof: .github/ISSUE_TEMPLATE/ absent — target 2 — `init`
-
-## Risks
-- <finding> — proof — criteria affected — action
-
-## Detail by criterion
-### Phase 0 · Setup
-- 0.1 (C) 2 — AGENTS.md, 120 lines, a map to three area guides; last change <date>, older than 90 days, so capped at 2
-- 0.4 (C) informative — one engine directory, project-specific content, tracked in git
-- 3.1 (W) unrated — forge unavailable
-
-## Unrated
-- <criterion> — <source that would rate it>
+<repo>/docs/aifier/assess-<YYYY-MM-DD>.md
 ```
 
-Rules for the report:
+Create the directory if needed. If a report already exists for the same day, overwrite it. Never
+commit; leave that to the person.
 
-- Every rated line cites a path, a command with its relevant output, or a sample count.
-- Never invent a file or a number. If you did not read it, you did not see it.
-- Unrated is a verdict in itself: say what source would rate it.
-- Keep opinions out of the detail; put them, briefly, in gaps and risks.
+End with a five-line summary in the conversation: global level and score, the two strongest
+phases, the two weakest, the first gap to close, and the report path.
 
-## Important rules
+## Calibration checks
 
-- Read-only. No write, no label change, no comment, no build, no test run in the audited repository.
-- No sub-agents. Do the reading yourself.
-- The 90-day rule caps at 2; it never lowers a score to 1 or 0.
-- A blocking criterion at 0 caps the phase at 1 even if every other criterion is 3.
-- Do not score what you cannot see: the forge unavailable means unrated, not absent.
+The grid carries expected scores for two reference repositories. When assessing one of them,
+compare the result with the expectation and state the delta. A result outside the expected range
+is a finding about the grid or the probes, to report as such, not a reason to adjust scores by
+hand.
