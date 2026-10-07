@@ -12,7 +12,7 @@ The `assess` skill is the exception: it runs from this repository against any ta
 |---|---|
 | `assess` | Read-only maturity audit of any repository against the eleven phases; runs from this repo, not rendered. |
 | `context` | audits what agents read: stale claims, dead paths, duplication, load per session, tiering and the split proposal for a long context file |
-| `gates` | declares the lint, typecheck, test and build commands per area, the preflight, compares with CI, runs them with captured output (`run.py`) |
+| `gates` | declares the lint, typecheck, test and build commands per area, the preflight, compares with CI, runs them with captured output (`run.sh`) |
 | `init` | Brings a repository to the Setup phase: detects the stack, confirms `aifier.yml`, renders constitution, templates, memory and the skills below. |
 | `gate` | Where an issue stands in the cycle, one line from one script (`gate.sh`): not qualified, needs input, qualified, planned, chosen, in progress; the one place the gate decision is written. |
 | `qualify` | Phase 1 Define: rewrites a raw issue into the two-audience contract, sets `<prefix>:todo`, stops at the intent gate. |

@@ -1,0 +1,32 @@
+## Verification Run
+
+Date: DATE · Config: aifier.yml
+
+- preflight ok: `test -f aifier.yml`
+
+CI comparison (.github/workflows/ci.yml):
+- root/lint: found in CI
+- root/test: found in CI
+- api/lint: found in CI
+- api/test: found in CI
+
+- root/lint: OK (exit 0) `sh -c 'echo lint ok'` → .aifier/gates/root-lint.log
+  $ sh -c 'echo lint ok'   (cwd ROOT)
+  lint ok
+- root/typecheck: not declared (gap)
+- root/test: FAIL (exit 3) `sh -c 'echo boom && exit 3'` → .aifier/gates/root-test.log
+  $ sh -c 'echo boom && exit 3'   (cwd ROOT)
+  boom
+- root/build: not declared (gap)
+- api/lint: OK (exit 0) `echo api lint from $(basename "$PWD")` → .aifier/gates/api-lint.log
+  $ echo api lint from $(basename "$PWD")   (cwd ROOT/api)
+  api lint from api
+- api/typecheck: not declared (gap)
+- api/test: OK (exit 0) `printf "one\ntwo\nthree\nfour\n"` → .aifier/gates/api-test.log
+  two
+  three
+  four
+- api/build: not declared (gap)
+
+Verdict: FAIL (1 gate)
+exit: 1

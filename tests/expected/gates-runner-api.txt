@@ -1,0 +1,13 @@
+## Verification Run
+
+Date: DATE · Config: aifier.yml
+
+- preflight ok: `test -f aifier.yml`
+
+- api/test: OK (exit 0) `printf "one\ntwo\nthree\nfour\n"` → .aifier/gates/api-test.log
+  two
+  three
+  four
+
+Verdict: OK
+exit: 0

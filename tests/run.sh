@@ -42,6 +42,20 @@ for fx in two-stacks docs-only dormant with-secret; do
     if ! diff -u "$expected" "$work/$fx.$kind"; then echo "tests: $fx $kind differs"; fail=1; fi
   done
 done
+# the gates runner on a fixture whose gates are shell one-liners: the block is diffed, logs stay in the fixture
+normalise_gates() { sed -E -e 's/^Date: [0-9T-]+ ·/Date: DATE ·/' -e "s#(/private)?$root/[A-Za-z0-9_-]*#ROOT#g"; }
+gates_case() {  # <name> <args...>: runs the runner, normalises the block, appends the runner's own exit code
+  name="$1"; shift
+  bash skills/gates/run.sh "$root/gates-runner/aifier.yml" "$@" > "$work/$name.raw"; code=$?
+  normalise_gates < "$work/$name.raw" > "$work/$name.txt"; echo "exit: $code" >> "$work/$name.txt"
+}
+gates_case gates-runner --preflight --compare-ci
+gates_case gates-runner-api --area api --family test
+for name in gates-runner gates-runner-api; do
+  expected="tests/expected/$name.txt"
+  if [ "${UPDATE:-}" = 1 ]; then cp "$work/$name.txt" "$expected"; continue; fi
+  if ! diff -u "$expected" "$work/$name.txt"; then echo "tests: $name differs"; fail=1; fi
+done
 # gate.sh decides from the payload alone (--from): the gh shim is never reached
 for fx in tests/fixtures/issues/*.json; do
   name="issue-$(basename "$fx" .json)"

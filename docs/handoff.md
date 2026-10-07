@@ -3,6 +3,14 @@
 Read at session start, update before stopping. Keep it under forty lines: current branch and
 goal, what is done and proven, what is blocked, the next step.
 
+## 2026-10-08 (later)
+
+- Branch `fix/20-gates-runner-bash`, issue #20: the gates runner is `skills/gates/run.sh` (bash),
+  `run.py` deleted, fixture `gates-runner` with two golden files, `scripts/check.sh` fails on any
+  `.py` under `skills/` or `scripts/` except `skills/init/render.py` until #21.
+- Issue #21 (render.py into the V2 Rust binary) is `needs-input`: two questions for the maintainer.
+- Next: a human merges #20; answer #21's questions, then `/plan 21`.
+
 ## 2026-10-08 (slice 2)
 
 - Branch `feat/13-cycle-skills-call-gate` (based on `feat/cycle-skills`, which carries slice 1,
