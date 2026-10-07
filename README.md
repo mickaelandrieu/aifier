@@ -70,7 +70,7 @@ What `init` renders into your project:
 |---|---|
 | `AGENTS.md` | the constitution: a short map, rules that apply everywhere, pointers to area guides |
 | `aifier.yml` | repo, branches, label prefix, gates, language, chosen guards |
-| Skills | run by your engine as slash commands: `/assess`, `/gates`, `/context`, `/compound`, `/status`, plus knowledge skills (proof discipline, review checklist, adversarial test plan, ADR and documentation rules) |
+| Skills | run by your engine as slash commands: the cycle (`/qualify`, `/plan`, `/build`, each stopping at its gate), the transverse ones (`/assess`, `/gates`, `/context`, `/compound`, `/status`), plus knowledge skills (proof discipline, review checklist, adversarial test plan, ADR and documentation rules) |
 | Guards | standalone hooks for your engine that constrain what the model reads and writes: protected paths, forbidden git operations, secrets, a required verification section before the agent stops |
 | Memory | the learned-rules catalogue, the decision journal (ADRs) and the session handoff file, all plain Markdown in git |
 | Workflow | two-audience issue templates, a PR template with a validation section, workflow labels |
@@ -84,6 +84,9 @@ The skills, once in your project:
 | `/context` | CDLC | Audits what agents read: stale files, duplicated knowledge, hot / warm / cold tiering, load per session. |
 | `/compound` | 6 and 9 | Captures a lesson as a learned rule, with a wrong example, a right example and an executable detection. Two modes: pre-release and incident. |
 | `/status` | all | Where the project stands against the eleven phases, and the next gap. |
+| `/qualify` | 1 Define | Rewrites a raw issue into the two-audience contract (problem, impact, observable acceptance criteria, folded technical analysis), sets the label, and stops: a human confirms the intent. |
+| `/plan` | 2 Plan | From a qualified issue, two or three approaches that diverge in strategy, with trade-offs, risks, the rules they honour and a recommendation; posted on the issue, then stops: a human replies `approach: <letter>`. |
+| `/build` | 3 Build | From the chosen approach, cuts the branch from the target base, loads the rules and area guides before the first edit, builds one slice, runs the gates and opens a PR ending with a Verification Run. Never merges. |
 
 ## How it works
 
@@ -143,7 +146,7 @@ The method pages live in [`method/`](method/), starting with the
 ```
 install.sh       one-line installer: copies skills/ into .agents/skills/
 method/          the method, one page per phase and per concept
-skills/          the portable skills: assess, init, and the knowledge skills rendered into your project
+skills/          the portable skills: assess, init, the cycle (qualify, plan, build) and the knowledge skills rendered into your project
 templates/       files init renders (constitution, area guides, templates, memory, aifier.yml)
 packs/           optional stack packs (python-hexagonal, react, playwright, ...)
 adapters/        V2: per-engine guards and memory for Claude Code, opencode and pi
