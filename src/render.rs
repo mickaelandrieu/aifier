@@ -1,6 +1,6 @@
 //! Deterministic rendering of the templates from `aifier.yml`.
 //!
-//! The contract is the one `skills/init/render.py` established, and the golden files under
+//! The contract is the one the former Python renderer of `init` established, and the golden files under
 //! `tests/expected/render/` hold it: same targets, same placeholder rules, same summary.
 //!
 //! Rules, in order of application on a template:
