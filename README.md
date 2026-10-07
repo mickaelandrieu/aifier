@@ -109,6 +109,62 @@ The three human gates are not optional. The generated skills stop at them by con
 guards refuse the operations that would skip them: nothing decides intent, picks an architecture or
 merges a pull request on its own.
 
+## Using it day to day
+
+One issue at a time, the same loop every time. Agents run the skills; humans hold three
+decisions. The labels (`<prefix>:todo`, `needs-input`, `in-progress`, `partial`, `done`) carry
+the state on the forge, and `/gate` reads it back in one line.
+
+```mermaid
+flowchart TD
+    I([Raw issue]) --> Q
+
+    subgraph D["1 Define"]
+        Q["/qualify<br/>two-audience contract"]
+        Q -->|open questions| NI1["needs-input<br/>author answers"]
+    end
+    NI1 --> G1
+    Q --> G1{{"Human gate: intent<br/>author confirms the contract<br/>todo"}}
+
+    G1 --> PL
+    subgraph P["2 Plan"]
+        PL["/plan<br/>2 or 3 approaches, trade-offs,<br/>proof per criterion, recommendation"]
+    end
+    PL --> G2{{"Human gate: architecture<br/>reply: approach: &lt;letter&gt;<br/>needs-input"}}
+
+    G2 --> B
+    subgraph C["3 Build · 4 Verify · 5 Review"]
+        B["/build<br/>branch from the target base,<br/>rules and area guides loaded first,<br/>one slice, in-progress"]
+        B --> V["gates run, output captured<br/>or BLOCKED"]
+        V --> PR["pull request<br/>Closes #N · Rules honoured<br/>## Verification Run"]
+        PR --> R["review (checklist, adversarial tests)<br/>PR health gate"]
+    end
+    R --> G3{{"Human gate: acceptance<br/>a human merges<br/>done"}}
+
+    G3 -.->|lesson found| K["6 and 9 Compound<br/>/compound → learned rules"]
+    K -.->|loaded by every agent| PL
+    G3 --> S["7 Ship · 8 Ops · 10 Deprecation<br/>checklist, rollback, flags"]
+
+    classDef gate fill:#fff3cd,stroke:#b58900,color:#000
+    class G1,G2,G3 gate
+```
+
+What you type, in order:
+
+| Moment | Command | What happens | It stops when |
+|---|---|---|---|
+| An issue lands | `/qualify N` | Rewrites it into the contract, grounds the technical part in the code, sets `todo` (or `needs-input` with the questions). | The author confirms the problem and the criteria. |
+| Contract confirmed | `/plan N` | Posts two or three approaches that differ in strategy, with the rules each must honour and how each criterion will be proven; sets `needs-input`. | You reply `approach: <letter>` on the issue, amendments in the same comment. |
+| Approach chosen | `/build N` | Cuts the branch, loads the learned rules and area guides, builds one slice, runs the gates, opens the pull request with its Verification Run; sets `in-progress`. | The pull request is open. It never merges. |
+| Pull request open | review skills | Checklist and adversarial test plan, with the PR health gate: no clean verdict on a red check or a conflict. | A human merges and sets `done`. |
+| A lesson appears | `/compound` | Turns it into a rule with a wrong example, a right example and a detection; every agent loads it next run. | The rule is in the catalogue. |
+| Any time | `/gate N`, `/status` | Where the issue stands, where the project stands. | Read-only. |
+
+What an agent never does here: decide the intent, pick the approach, merge, mark a pull request
+ready, or remove a `need-work` label. Each skill checks the gate behind it before acting and
+refuses to go on without the human signal: an unqualified issue is sent to `/qualify`, a plan
+without an `approach:` reply waits, an issue already in progress asks before resuming.
+
 ## What you gain
 
 - **Control without babysitting.** Humans hold three decisions. Everything between them is
