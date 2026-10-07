@@ -45,7 +45,7 @@ decisions humans must own, and a loop that turns every lesson into a rule.
 ## What you get
 
 aifier brings a repository to the **Setup** phase of the
-[AI-augmented SDLC](https://www.sfeir.com/concepts/sdlc-augmente/): eleven phases, three human
+AI-augmented SDLC described in [`method/phases.md`](method/phases.md): eleven phases, three human
 gates (intent, architecture, acceptance), two capitalisation points (before release, from
 production).
 
@@ -177,23 +177,22 @@ without an `approach:` reply waits, an issue already in progress asks before res
   rendered for Claude Code, opencode or pi. Switch engine, or run two, without rewriting your
   context.
 - **A measurable starting point.** `assess` gives you a score you can re-run after each change.
-  Teams following this method report fewer correction iterations after about ten cycles
-  ([source](https://www.sfeir.com/concepts/sdlc-augmente/)); the grid lets you check that on
-  your own repository rather than take it on faith.
+  The method's published figures (fewer correction iterations after about ten cycles) are
+  orders of magnitude, not promises; the grid lets you measure your own repository rather than
+  take them on faith.
 
 ## Grounding
 
-aifier does not invent its vocabulary. It implements publicly documented concepts:
+aifier does not invent its vocabulary. It builds on five concepts, each defined in the method
+pages of this repository:
 
-- [AI-augmented SDLC](https://www.sfeir.com/concepts/sdlc-augmente/): the eleven phases, three
-  gates and two capitalisations.
-- [Harness engineering](https://www.sfeir.com/concepts/harness-engineering/): guides before the
-  action, sensors after it, and the harnessability of a codebase.
-- [Context engineering](https://www.sfeir.com/concepts/context-engineering/) and the
-  [CDLC](https://www.sfeir.com/concepts/cdlc/): context as a versioned dependency, in tiers.
-- [Issue-based development](https://www.sfeir.com/concepts/issue-based-development/): report a
-  gap, let the agent analyse the system, arbitrate the plan, review, capitalise.
-- [Context flywheel](https://www.sfeir.com/concepts/context-flywheel/): why the loop compounds.
+- AI-augmented SDLC: the eleven phases, three gates and two capitalisations.
+- Harness engineering: guides before the action, sensors after it, and the harnessability of a
+  codebase.
+- Context engineering and the CDLC: context as a versioned dependency, in tiers.
+- Issue-based development: report a gap, let the agent analyse the system, arbitrate the plan,
+  review, capitalise.
+- Context flywheel: why the loop compounds.
 
 The method pages live in [`method/`](method/), starting with the
 [eleven phases](method/phases.md) and the [assess grid](method/assess.md).
