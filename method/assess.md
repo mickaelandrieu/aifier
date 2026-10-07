@@ -27,6 +27,10 @@ Règles d'agrégation :
 - Les critères notés 3 exigent une preuve datée de moins de **90 jours** (dernier run de CI, dernière
   issue, dernier commit du fichier). Au-delà, la note redescend à 2 : une pratique qui ne s'exerce plus
   est déclarée, pas gouvernée.
+- Un dépôt **dormant** (aucun commit depuis 90 jours) se signale une fois, dans les risques, avec la
+  date du dernier commit. Le plafond à 2 s'y applique aux critères qui exigent une pratique récente
+  (échantillons d'issues et de PR, runs de CI), pas aux artefacts déclarés dont la présence suffit au
+  niveau visé.
 
 Niveaux de phase : **absent** (< 1), **émergent** (1 à 1,9), **outillé** (2 à 2,7), **gouverné** (≥ 2,8).
 
@@ -81,6 +85,7 @@ Le cadre dans lequel les agents travaillent. Tout le reste s'appuie dessus.
 | 0.4 | **Moteurs agents détectés** (informatif, hors note) | C | Dossiers de moteurs présents, suivis ou ignorés par git, contenu générique ou spécifique au projet, copies de travail périmées | Rapporté tel quel : la portabilité est un choix d'outillage, pas un niveau de maturité du cycle |
 | 0.5 | **Harnessability du code** | H | Typage activé (`tsconfig` `strict`, `mypy`/`pyright` configurés, équivalents), formatter et linter configurés, frontières de modules (packages, workspaces) | 0 rien · 1 linter seul · 2 typage et linter configurés · 3 typage strict exécuté en CI et frontières explicites |
 | 0.6 | **Amorçage de l'environnement** | H | `Makefile`, `justfile`, `scripts/`, `.env.example`, `devcontainer.json`, section d'installation du README | 0 rien · 1 un README narratif · 2 une commande d'amorçage documentée · 3 la CI invoque le même script ou la même cible, y compris dans une image de conteneur |
+| 0.8 | **Aucun secret dans le dépôt** (bloquant) | H | Fichiers suivis par git sans clé d'API, mot de passe, jeton ou secret de session ; `.env*` ignorés ; scanner de secrets configuré | 0 un secret réel suivi par git · 1 des valeurs de démonstration en dur dans la configuration (compose, CI) sans scanner · 2 rien de suivi, `.env.example` seul porte les noms · 3 idem, et un scanner bloque en CI ou en hook |
 | 0.7 | **Périmètre de délégation** | W | Un texte qui dit ce que les agents ne font pas (fusion, intention, architecture, zones critiques) | 0 rien · 2 écrit dans la constitution ou `CONTRIBUTING.md` · 3 les instructions d'agents s'arrêtent explicitement aux gates |
 
 ## Phase 1 · Define — gate humain d'intention
@@ -213,7 +218,7 @@ fondé sur les phases et non sur la moyenne :
 
 | Verdict | Condition |
 |---|---|
-| **Non préparé** | Un critère bloquant à 0 dans les phases 0, 1 ou 4 |
+| **Non préparé** | Un critère bloquant à 0 dans les phases 0, 1 ou 4 (0.8 à 0 suffit) |
 | **Prêt pour le Setup** | Aucun bloquant à 0 ; phases 0, 1, 4 au moins émergentes |
 | **Cycle outillé** | Phases 0 à 6 au moins outillées (≥ 2) et critère 7.1 ≥ 2 |
 | **Cycle gouverné** | Phases 0 à 7 outillées, dont au moins quatre gouvernées (≥ 2,8), et phase 9 ≥ 2 |

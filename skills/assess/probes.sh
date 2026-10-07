@@ -94,6 +94,16 @@ line "dead code tooling: $(grep -lE 'vulture|knip|ts-prune|deadcode' pyproject.t
 line "feature flags lib: $(grep -lE 'unleash|launchdarkly|flipt|flagsmith|growthbook' pyproject.toml package.json 2>/dev/null | tr '\n' ' ')"
 line "structured logging / tracing: $(grep -lE 'structlog|opentelemetry|langfuse|sentry|datadog' pyproject.toml package.json 2>/dev/null | tr '\n' ' ')"
 
+section "Secrets (candidates, read before citing)"
+if have gitleaks; then
+  line "gitleaks: $(gitleaks detect --no-banner --redact --exit-code 0 2>&1 | grep -oE '(no leaks found|leaks found: [0-9]+)' | head -1)"
+else
+  line "gitleaks: not installed"
+fi
+line "tracked files with secret-looking assignments (max 15):"
+src_files | grep -vE '\.(png|jpg|gif|pdf|svg|lock)$' | xargs grep -nIE -i '(api[_-]?key|secret|password|passwd|token)\s*[:=]\s*["'"'"']?[A-Za-z0-9_\-\/+=]{8,}' 2>/dev/null | grep -viE 'example|changeme|your[_-]|<|\$\{|\$[A-Z_]+|os\.environ|getenv|process\.env|secrets\.|\.get\(' | head -15 | sed 's/^/  - /'
+line "tracked .env files: $(src_files | grep -E '(^|/)\.env(\.[a-z]+)?$' | grep -v example | tr '\n' ' ')"
+
 section "Git activity"
 WIN="--since=$SINCE"
 n=$(git log $WIN --no-merges --format=%h | wc -l | tr -d ' ')
