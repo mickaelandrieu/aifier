@@ -6,6 +6,7 @@
 # Requires a POSIX shell, git, curl and tar: macOS, Linux, WSL or Git Bash. A native Windows
 # installer comes with the V2 binary.
 set -eu
+main() {
 REF="${AIFIER_REF:-main}"
 DEST="${AIFIER_DIR:-.agents/skills}"
 REPO_URL="https://github.com/mickaelandrieu/aifier"
@@ -42,3 +43,5 @@ if [ "$DEST" != ".claude/skills" ] && [ ! -e .claude/skills ]; then
 fi
 echo "aifier: installed $(ls "$DEST" | wc -l | tr -d ' ') skills into $DEST"
 echo "aifier: next, in your coding agent run /assess then /init"
+}
+main "$@"
