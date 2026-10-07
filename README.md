@@ -13,7 +13,8 @@ generated for Claude Code, opencode and pi.
 ## Method
 
 The method follows the AI-augmented SDLC: eleven phases, three human gates (intent, architecture,
-acceptance) and two capitalisation points (pre-release and runtime). See `method/`.
+acceptance) and two capitalisation points (pre-release and runtime). See [method/phases.md](method/phases.md)
+and the [assess evaluation grid](method/assess.md).
 
 ## Commands
 
@@ -37,4 +38,4 @@ adapters/        generators for .claude/, .opencode/ and pi
 
 ## Status
 
-Early design. Extracted from the RAISE platform's internal agent framework.
+Early design. Distilled from an internal agent framework run on a production GenAI platform; the method itself follows the publicly documented AI-augmented SDLC (https://www.sfeir.com/concepts/sdlc-augmente/).
