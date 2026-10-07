@@ -50,19 +50,49 @@ gates (intent, architecture, acceptance), two capitalisation points (before rele
 production).
 
 aifier is installed once into your repository and then runs **inside your coding agent**: the
-skills are plain `SKILL.md` files that Claude Code, opencode and pi all load.
+skills are plain `SKILL.md` files that Claude Code, opencode and pi all load. See
+[Install aifier into your project](#install-aifier-into-your-project).
+
+## Install aifier into your project
+
+**What you need.** A git repository, a POSIX shell with `git`, `curl` and `tar` (macOS, Linux,
+WSL, Git Bash), and a coding agent that loads skills (Claude Code, opencode or pi). `gh` and `jq`
+let `assess` and `gate` read the forge; without them those parts say so and go on. Nothing else:
+no Python, no Node, no Rust on the machine that uses aifier.
+
+**1. Install the skills.** From the root of your repository:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/mickaelandrieu/aifier/main/install.sh | sh
 ```
 
-Requires a POSIX shell with `git`, `curl` and `tar` (macOS, Linux, WSL, Git Bash); `gh` and `jq`
-enrich the forge section. Native Windows comes with the V2 binary. Until the repository is public,
-clone it and run `AIFIER_SRC=/path/to/aifier sh install.sh`.
+The installer copies the skills into `.agents/skills/` (and links `.claude/skills` to it for
+Claude Code), writes `.aifier/install.yml`, and stops. Options, as environment variables:
+`AIFIER_DIR` to choose the skills directory, `AIFIER_REF` to pin a branch or a tag, and
+`AIFIER_SRC=/path/to/a/clone` to install from a local checkout, which is the way while the
+repository is private. Run it again any time to update: it replaces the skills and nothing else.
 
-Then, in your agent: `/assess` to measure, `/init` to set up. `init` detects your stack, shows
-the `aifier.yml` it inferred, asks the rest, and renders. Nothing in the daily life of the
-project calls aifier afterwards.
+**2. Measure.** In your agent, run `/assess`. It is read-only: a score per phase, a verdict, the
+gaps in priority order with the action that closes each.
+
+**3. Set up.** Run `/init`. It detects the stack and the areas, shows the `aifier.yml` it inferred,
+asks what it could not infer (engine, branches, label prefix, language), then renders the
+constitution, the area guides, the issue and pull request templates, the memory files and the
+knowledge skills. An existing file is never overwritten silently: you choose merge, side file or
+skip for each. It prints the forge commands (labels, branch protection) and runs them only on your
+yes. Review the diff and commit it on a branch, like any change.
+
+**4. Declare the gates.** Run `/gates`. It finds lint, typecheck, test and build per area, compares
+them with CI, writes them into `aifier.yml`, and installs the runner every agent uses from then on
+to end its work with a captured `## Verification Run`.
+
+**5. Work.** Open an issue and run `/qualify`, `/plan`, `/build`: see
+[Using it day to day](#using-it-day-to-day). `/status` shows where the project stands; `/compound`
+turns a lesson into a rule.
+
+**Remove.** Delete `.agents/skills/` (or your `AIFIER_DIR`), `.claude/skills` if it is a link,
+and `.aifier/`. The files `init` rendered are yours: keep them or not. The V2 binary brings
+`aifier update` and `aifier remove`, see [ADR 0002](docs/decisions/0002-aifier-binary.md).
 
 What `init` renders into your project:
 
