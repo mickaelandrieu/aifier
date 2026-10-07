@@ -56,6 +56,22 @@ for name in gates-runner gates-runner-api; do
   if [ "${UPDATE:-}" = 1 ]; then cp "$work/$name.txt" "$expected"; continue; fi
   if ! diff -u "$expected" "$work/$name.txt"; then echo "tests: $name differs"; fail=1; fi
 done
+# the renderer: the binary renders two configurations into empty trees and two skills in place;
+# AIFIER_DATE pins the date; the expected trees were captured identical to the Python renderer's
+bin="${AIFIER_BIN:-}"
+for c in target/release/aifier target/debug/aifier; do [ -z "$bin" ] && [ -x "$c" ] && bin="$c"; done
+[ -n "$bin" ] || { echo "tests: BLOCKED, build the binary first (cargo build --release) or set AIFIER_BIN"; exit 1; }
+cp tests/expected/two-stacks.detect.yml "$work/render-two-stacks.yml"   # the draft detect.sh produces, as init confirms it
+cp aifier.yml "$work/render-aifier.yml"
+for case in two-stacks aifier; do
+  out="$work/render/$case"; mkdir -p "$out/skills"
+  cp -R skills/build skills/verification-evidence "$out/skills/"
+  AIFIER_DATE=DATE "$bin" render "$work/render-$case.yml" templates "$out" --skills "$out/skills" | sed "s#$out/#OUT/#g" > "$out/render.out"
+  AIFIER_DATE=DATE "$bin" render "$work/render-$case.yml" templates "$out" | sed "s#$out/#OUT/#g" >> "$out/render.out"
+  expected="tests/expected/render/$case"
+  if [ "${UPDATE:-}" = 1 ]; then rm -rf "${expected:?}"; mkdir -p tests/expected/render; cp -R "$out" "$expected"; continue; fi
+  if ! diff -r "$expected" "$out"; then echo "tests: render $case differs"; fail=1; fi
+done
 # gate.sh decides from the payload alone (--from): the gh shim is never reached
 for fx in tests/fixtures/issues/*.json; do
   name="issue-$(basename "$fx" .json)"

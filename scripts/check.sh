@@ -8,7 +8,7 @@ for f in install.sh scripts/*.sh skills/*/*.sh tests/*.sh tests/fixtures/*.sh; d
   case "$f" in *.sh) ;; *) continue;; esac
   if head -1 "$f" | grep -q bash; then bash -n "$f" || fail=1; else sh -n "$f" || fail=1; fi
 done
-hits="$(grep -rniE 'raise|sfeir' --exclude-dir=.git --exclude-dir=.claude . | grep -v 'sfeir.com/concepts' || true)"
+hits="$(grep -rniE 'raise|sfeir' --exclude-dir=.git --exclude-dir=.claude --exclude-dir=target . | grep -v 'sfeir.com/concepts' || true)"
 [ -n "$hits" ] && { echo "origin references found:"; echo "$hits"; fail=1; }
 for f in skills/*/SKILL.md; do
   keys="$(awk '/^---$/{c++; next} c==1 {print $1}' "$f" | tr -d ':' | sort | tr '\n' ' ')"

@@ -3,6 +3,14 @@
 Read at session start, update before stopping. Keep it under forty lines: current branch and
 goal, what is done and proven, what is blocked, the next step.
 
+## 2026-10-08 (binary)
+
+- Branch `feat/21-aifier-render`, issue #21 slice 1 of 3: Rust crate, `aifier render`, byte-identical
+  to `render.py` (64 files compared), golden trees under `tests/expected/render/`, CI builds the
+  crate, ADR 0002. `render.py` stays until slice 3.
+- Next: slice 2 (release workflow, `install.sh` download by tag), slice 3 (`init` calls the binary,
+  `render.py` deleted, check exception removed).
+
 ## 2026-10-08 (later)
 
 - Branch `fix/20-gates-runner-bash`, issue #20: the gates runner is `skills/gates/run.sh` (bash),

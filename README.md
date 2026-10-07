@@ -204,6 +204,7 @@ The method pages live in [`method/`](method/), starting with the
 install.sh       one-line installer: copies skills/ into .agents/skills/
 method/          the method, one page per phase and per concept
 skills/          the portable skills: assess, init, the cycle (qualify, plan, build) and the knowledge skills rendered into your project
+src/             the aifier binary (Rust): `aifier render`, the renderer init calls; update, remove and guards follow
 templates/       files init renders (constitution, area guides, templates, memory, aifier.yml)
 packs/           optional stack packs (python-hexagonal, react, playwright, ...)
 adapters/        V2: per-engine guards and memory for Claude Code, opencode and pi
