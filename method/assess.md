@@ -28,7 +28,22 @@ Règles d'agrégation :
   issue, dernier commit du fichier). Au-delà, la note redescend à 2 : une pratique qui ne s'exerce plus
   est déclarée, pas gouvernée.
 
-Niveaux de phase : **absent** (< 1), **émergent** (1 à 1,9), **outillé** (2 à 2,9), **gouverné** (3).
+Niveaux de phase : **absent** (< 1), **émergent** (1 à 1,9), **outillé** (2 à 2,7), **gouverné** (≥ 2,8).
+
+Conventions qui suppriment les cas limites :
+
+- les seuils en pourcentage sont **inclusifs** : « 70 % » se lit « 14 sur 20 passent » ;
+- la **protection de branche** se juge sur les branches qui ont reçu les PR de l'échantillon, pas
+  seulement sur la branche par défaut ; si celle-ci est protégée mais pas la branche qui reçoit
+  l'essentiel des fusions, les critères 3.1, 5.1, 5.4, 5.5 et 7.1 sont plafonnés à 2 et le fait
+  devient un **risque** ;
+- une revue menée par un agent que l'auteur de la PR a lancé n'est **pas** une revue indépendante ;
+- un **cadre sans rien de déclaré** (enum de flags vide, seuils de couverture jamais exécutés en CI,
+  check requis dont le nom ne correspond plus à rien) vaut 1, pas 2 ;
+- une constitution qui **recopie les règles d'un skill** au lieu d'y renvoyer est du contexte
+  dupliqué : 0.3 plafonné à 2 ;
+- la structure d'une issue compte qu'elle vienne du template de la forge ou d'un agent de
+  qualification qui l'a réécrite : on note le contrat écrit, pas son origine.
 
 Chaque critère porte un **axe** qui sert à la seconde lecture du rapport :
 
@@ -63,9 +78,9 @@ Le cadre dans lequel les agents travaillent. Tout le reste s'appuie dessus.
 | 0.1 | **Constitution des agents** (bloquant) | C | Un fichier racine lu par les hôtes (`AGENTS.md`, à défaut `CLAUDE.md` ou équivalent) | 0 aucun · 1 un fichier généré non maintenu ou > 300 lignes de prose · 2 un fichier court qui joue le rôle de carte et renvoie vers des guides par zone · 3 idem, et chaque fichier référencé existe et a été modifié depuis moins de 90 jours |
 | 0.2 | **Guides par zone** | C | Un guide dans chaque sous-projet (`back/AGENTS.md`, `front/AGENTS.md`, `e2e/AGENTS.md`...) | 0 aucun · 1 un seul guide pour un monorepo multi-stack · 2 un guide par zone · 3 chaque guide énonce des règles vérifiables, pas une description |
 | 0.3 | **Connaissance packagée en skills** | C | Dossiers `SKILL.md` (`.agents/skills/`, `.claude/skills/`) avec `name` et `description` | 0 aucun · 1 des prompts épars · 2 des skills nommés et décrits · 3 les skills sont chargés par des agents ou commandes identifiables, aucun doublon de contenu entre skills et constitution |
-| 0.4 | **Hôtes agents détectés** (informatif, hors note) | C | Configurations présentes pour un ou plusieurs hôtes ; copies manuelles ou générées depuis une source unique | Rapporté tel quel : la portabilité est un choix d'outillage, pas un niveau de maturité du cycle |
+| 0.4 | **Moteurs agents détectés** (informatif, hors note) | C | Dossiers de moteurs présents, suivis ou ignorés par git, contenu générique ou spécifique au projet, copies de travail périmées | Rapporté tel quel : la portabilité est un choix d'outillage, pas un niveau de maturité du cycle |
 | 0.5 | **Harnessability du code** | H | Typage activé (`tsconfig` `strict`, `mypy`/`pyright` configurés, équivalents), formatter et linter configurés, frontières de modules (packages, workspaces) | 0 rien · 1 linter seul · 2 typage et linter configurés · 3 typage strict exécuté en CI et frontières explicites |
-| 0.6 | **Amorçage de l'environnement** | H | `Makefile`, `justfile`, `scripts/`, `.env.example`, `devcontainer.json`, section d'installation du README | 0 rien · 1 un README narratif · 2 une commande d'amorçage documentée · 3 la commande est celle qu'utilise la CI |
+| 0.6 | **Amorçage de l'environnement** | H | `Makefile`, `justfile`, `scripts/`, `.env.example`, `devcontainer.json`, section d'installation du README | 0 rien · 1 un README narratif · 2 une commande d'amorçage documentée · 3 la CI invoque le même script ou la même cible, y compris dans une image de conteneur |
 | 0.7 | **Périmètre de délégation** | W | Un texte qui dit ce que les agents ne font pas (fusion, intention, architecture, zones critiques) | 0 rien · 2 écrit dans la constitution ou `CONTRIBUTING.md` · 3 les instructions d'agents s'arrêtent explicitement aux gates |
 
 ## Phase 1 · Define — gate humain d'intention
@@ -74,9 +89,9 @@ Une idée devient un contrat lisible par quelqu'un qui n'ouvrira jamais le code.
 
 | # | Critère | Axe | Preuves attendues | 0 → 3 |
 |---|---|---|---|---|
-| 1.1 | **Templates d'issue** (bloquant) | W | `.github/ISSUE_TEMPLATE/*.yml` ou `.gitlab/issue_templates/` | 0 aucun · 1 un template libre · 2 des champs problème, comportement attendu, critères d'acceptation · 3 les 20 dernières issues suivent la structure à plus de 70 % |
+| 1.1 | **Templates d'issue** (bloquant) | W | `.github/ISSUE_TEMPLATE/*.yml` ou `.gitlab/issue_templates/` | 0 aucun · 1 un template libre · 2 des champs problème, comportement attendu, critères d'acceptation · 3 les 20 dernières issues suivent la structure à 70 % ou plus |
 | 1.2 | **Deux audiences** | W | Une partie haute en langage métier (problème, impact, critères observables) et une partie technique repliée | 0 tout mélangé · 2 la séparation est dans le template · 3 un échantillon d'issues la respecte |
-| 1.3 | **Critères d'acceptation observables** | W | Formulés « quand X, alors Y », vérifiables sans lire le code | 0 absents · 1 présents mais techniques · 2 présents et comportementaux dans le template · 3 présents dans plus de 70 % des issues fermées récentes |
+| 1.3 | **Critères d'acceptation observables** | W | Formulés « quand X, alors Y », vérifiables sans lire le code | 0 absents · 1 présents mais techniques · 2 présents et comportementaux dans le template · 3 présents dans 70 % ou plus des issues fermées récentes |
 | 1.4 | **Qualification outillée** | W | Une commande ou un skill qui réécrit une issue brute dans le contrat, et un état « qualifiée » (label) | 0 rien · 2 la commande existe · 3 l'état est posé sur les issues récentes |
 | 1.5 | **Arrêt humain sur l'intention** | W | L'issue qualifiée attend une validation humaine avant plan ou build | 0 l'agent enchaîne · 2 l'arrêt est écrit · 3 l'état du workflow (label) matérialise l'attente |
 
@@ -98,12 +113,12 @@ Une tranche à la fois, sous conventions écrites.
 
 | # | Critère | Axe | Preuves attendues | 0 → 3 |
 |---|---|---|---|---|
-| 3.1 | **Branches et base protégée** | W | Convention de branche écrite, branche par défaut protégée (`gh api repos/:owner/:repo/branches/<default>/protection`) | 0 commits directs sur la base · 1 convention orale · 2 convention écrite · 3 protection active : pas de push direct |
-| 3.2 | **Commits conventionnels** | W | `commitlint`, hook, ou ratio sur les 100 derniers commits | 0 < 30 % · 1 30 à 70 % · 2 > 70 % · 3 > 90 % ou vérifié par hook ou CI |
+| 3.1 | **Branches et base protégée** | W | Convention de branche écrite, protection des branches qui reçoivent les PR de l'échantillon (`gh api repos/:owner/:repo/branches/<branche>/protection`) | 0 commits directs sur la base · 1 convention orale · 2 convention écrite · 3 protection active sur ces branches : ni push direct, ni push force, administrateurs non exemptés |
+| 3.2 | **Commits conventionnels** | W | `commitlint`, hook, ou ratio sur les 100 derniers commits | 0 < 30 % · 1 < 70 % · 2 ≥ 70 % · 3 ≥ 90 % ou vérifié par hook ou CI |
 | 3.3 | **Conventions de code écrites** | C | Guides de style par langage, configuration de linter et formatter, `CODEOWNERS` | 0 rien · 1 linter seul · 2 guide écrit et config · 3 guide chargé par les agents de build |
 | 3.4 | **Catalogue de règles apprises chargé au build** | C | Agents ou skills de build qui chargent le catalogue | 0 pas de catalogue · 2 chargé · 3 chargé et le catalogue a bougé depuis moins de 90 jours |
-| 3.5 | **Les tests font partie du changement** | G | Ratio des 20 dernières PR fusionnées qui touchent des fichiers de test | 0 < 20 % · 1 20 à 50 % · 2 > 50 % · 3 > 70 % et la règle est écrite |
-| 3.6 | **Une tranche par PR** | W | Taille médiane des 20 dernières PR fusionnées (fichiers changés), issues liées | 0 PR fourre-tout sans issue · 1 PR liées mais larges · 2 médiane sous 20 fichiers et issue liée · 3 idem avec `Closes #N` ou équivalent systématique |
+| 3.5 | **Les tests font partie du changement** | G | Ratio des 20 dernières PR fusionnées qui touchent des fichiers de test | 0 < 20 % · 1 < 50 % · 2 ≥ 50 % · 3 ≥ 70 % et la règle est écrite |
+| 3.6 | **Une tranche par PR** | W | Taille médiane des 20 dernières PR fusionnées (fichiers changés), issues liées par référence API **ou** mot-clé dans le corps (la forge ne résout pas `Closes #N` hors branche par défaut) | 0 PR fourre-tout sans issue · 1 PR liées mais larges · 2 médiane sous 20 fichiers et issue liée · 3 idem avec `Closes #N` ou équivalent systématique |
 
 ## Phase 4 · Verify
 
@@ -112,9 +127,9 @@ Les gates existent, tournent, et laissent une preuve.
 | # | Critère | Axe | Preuves attendues | 0 → 3 |
 |---|---|---|---|---|
 | 4.1 | **Gates déclarés** (bloquant) | G | Commandes de lint, typage, tests, build découvrables (`package.json` scripts, `pyproject.toml`, `Makefile`, `justfile`) | 0 aucune · 1 certaines · 2 les quatre familles présentes dans chaque sous-projet · 3 les quatre regroupées sous une commande unique documentée |
-| 4.2 | **Gates exécutés en CI** | G | `.github/workflows/`, `.gitlab-ci.yml`, `cloudbuild.yaml` qui lancent les mêmes commandes | 0 pas de CI · 1 CI partielle · 2 les quatre familles en CI · 3 checks requis avant fusion (protection de branche) |
+| 4.2 | **Gates exécutés en CI** | G | `.github/workflows/`, `.gitlab-ci.yml`, `cloudbuild.yaml` qui lancent les mêmes commandes | 0 pas de CI · 1 CI partielle · 2 les quatre familles en CI · 3 checks requis avant fusion, dont les noms correspondent aux checks réellement rapportés sur une PR récente |
 | 4.3 | **Parité locale / CI** | G | La CI appelle les mêmes commandes que la doc locale ; un préflight d'environnement existe | 0 commandes différentes · 2 mêmes commandes · 3 préflight écrit et imposé avant tout verdict |
-| 4.4 | **Couverture mesurée** | G | Rapport de couverture en CI, seuil ou tendance | 0 aucune · 1 mesurée sans seuil · 2 seuil déclaré · 3 seuil bloquant |
+| 4.4 | **Couverture mesurée** | G | Rapport de couverture en CI, seuil ou tendance | 0 aucune · 1 seuils configurés mais aucune étape de CI ne mesure · 2 mesurée en CI · 3 seuil bloquant |
 | 4.5 | **Discipline de preuve** | G | Les instructions d'agents exigent la sortie capturée des commandes et un verdict `BLOCKED` quand un check ne peut pas tourner ; le template de PR a une section de validation | 0 rien · 1 une section « tests » libre · 2 la règle est écrite et le template l'exige · 3 les PR récentes contiennent la sortie des commandes |
 | 4.6 | **Tests de comportement** | G | Règle écrite contre les tests couplés à l'implémentation (mocks qui vérifient des appels, fixtures qui recalculent le résultat) | 0 rien · 2 règle écrite · 3 reprise dans la checklist de revue |
 
@@ -128,18 +143,18 @@ Plusieurs regards, un verdict, et la revue nourrit les règles.
 | 5.2 | **Checklist de revue écrite** | C | Sections architecture, qualité, sécurité, couverture, qualité des tests ; gabarit de rapport | 0 rien · 1 liste informelle · 2 checklist complète · 3 chargée par les agents de revue |
 | 5.3 | **Revue automatisée** | G | Commande ou skill de revue qui poste des constats sur la PR ; plusieurs angles en parallèle (code, architecture, sécurité, QA) | 0 rien · 1 un bot de lint · 2 une revue agent sur demande · 3 plusieurs angles consolidés, constats visibles sur des PR récentes |
 | 5.4 | **Health gate de PR** | G | Aucune approbation possible avec conflits ou checks en échec | 0 rien · 2 règle écrite · 3 imposée par la protection de branche ou la revue automatisée |
-| 5.5 | **L'auteur ne s'approuve pas** | W | La PR n'est jamais marquée prête par celui (humain ou agent) qui l'a produite | 0 auto-approbation · 2 écrit · 3 l'état « ok » est posé par une revue indépendante |
+| 5.5 | **L'auteur ne s'approuve pas** | W | La PR n'est jamais marquée prête par celui qui l'a produite, humain ou agent lancé par l'auteur | 0 auto-approbation · 2 écrit · 3 l'échantillon montre l'état « ok » posé par un tiers indépendant |
 | 5.6 | **La revue propose des règles** | W | Le processus de revue inclut « ce constat doit-il devenir une règle apprise ? » | 0 rien · 2 écrit · 3 une règle récente provient d'une revue |
 
 ## Phase 6 · Compound-1 — capitalisation avant livraison
 
 | # | Critère | Axe | Preuves attendues | 0 → 3 |
 |---|---|---|---|---|
-| 6.1 | **Catalogue de règles apprises** (bloquant) | C | Un fichier canonique de règles numérotées : sévérité, règle, exemple fautif, exemple correct, méthode de détection | 0 rien · 1 des notes dispersées (`docs/solutions/`, wiki) · 2 le catalogue au format complet · 3 chaque règle a une détection exécutable |
+| 6.1 | **Catalogue de règles apprises** (bloquant) | C | Un fichier canonique de règles numérotées : sévérité, règle, exemple fautif, exemple correct, méthode de détection | 0 rien · 1 des notes dispersées (`docs/solutions/`, wiki) · 2 le catalogue au format complet · 3 chaque règle de code a une détection exécutable (les règles de processus peuvent rester en prose) |
 | 6.2 | **Commande de capture** | W | Une commande qui extrait les leçons, dédoublonne contre le catalogue et persiste | 0 rien · 2 la commande existe · 3 le catalogue a reçu une règle depuis moins de 90 jours |
 | 6.3 | **Réinjection** | C | Le catalogue est chargé par les agents de plan, build et revue | 0 non chargé · 2 chargé par au moins un · 3 chargé par les trois |
 | 6.4 | **Qualité des règles** | C | Chaque règle est un motif répétable, pas un ticket fermé ni une règle de lint | 0 non applicable · 2 critère d'admission écrit · 3 échantillon conforme |
-| 6.5 | **Une séance propre ne produit rien** | W | Il est écrit qu'une absence de leçon est un résultat valide | 0 rien · 2 écrit |
+| 6.5 | **Une séance propre ne produit rien** (informatif, hors note) | W | Il est écrit qu'une absence de leçon est un résultat valide | Rapporté tel quel |
 
 ## Phase 7 · Ship — gate humain d'acceptation
 
@@ -148,7 +163,7 @@ Plusieurs regards, un verdict, et la revue nourrit les règles.
 | 7.1 | **Seul un humain fusionne** (bloquant) | W | Instructions d'agents sans `merge` ; protection de branche ; pas d'auto-merge | 0 un agent fusionne · 2 écrit · 3 protection active et aucun bot dans les auteurs de fusion récents |
 | 7.2 | **Checklist de mise en production** | W | `RELEASE.md`, section de `CONTRIBUTING.md`, template de release | 0 rien · 1 tribale · 2 écrite · 3 suivie dans les dernières releases (tags, notes) |
 | 7.3 | **Rollback écrit à froid** | W | Procédure de retour arrière documentée avant le déploiement, par type de changement (code, schéma, config) | 0 rien · 2 écrite · 3 testée ou référencée dans les PR à risque |
-| 7.4 | **Déploiement progressif** | H | Feature flags, canary, pourcentage de trafic dans la config de déploiement | 0 tout ou rien · 1 flags ad hoc · 2 mécanisme déclaré · 3 utilisé sur une livraison récente |
+| 7.4 | **Déploiement progressif** | H | Feature flags, canary, pourcentage de trafic dans la config de déploiement | 0 tout ou rien · 1 cadre de flags sans aucun flag déclaré · 2 mécanisme déclaré et utilisé · 3 utilisé sur une livraison récente |
 | 7.5 | **Journal des changements** | C | `CHANGELOG.md` ou release notes générées, à jour du dernier tag | 0 rien · 1 périmé · 2 à jour · 3 généré depuis les commits ou PR |
 
 ## Phase 8 · Ops
@@ -201,7 +216,7 @@ fondé sur les phases et non sur la moyenne :
 | **Non préparé** | Un critère bloquant à 0 dans les phases 0, 1 ou 4 |
 | **Prêt pour le Setup** | Aucun bloquant à 0 ; phases 0, 1, 4 au moins émergentes |
 | **Cycle outillé** | Phases 0 à 6 au moins outillées (≥ 2) et critère 7.1 ≥ 2 |
-| **Cycle gouverné** | Phases 0 à 7 outillées, dont au moins quatre gouvernées (= 3), et phase 9 ≥ 2 |
+| **Cycle gouverné** | Phases 0 à 7 outillées, dont au moins quatre gouvernées (≥ 2,8), et phase 9 ≥ 2 |
 
 Les phases 8 et 10, et le reste de la phase 7, ne conditionnent pas le verdict « outillé » : leur
 matière vit souvent hors du dépôt, dans la chaîne de déploiement. Elles figurent dans le profil et dans
@@ -219,12 +234,22 @@ Chaque critère noté sous 2 devient un écart. L'ordre de priorité :
 Chaque écart est rendu avec : la preuve manquante, la note cible réaliste (souvent 2, pas 3), et la
 commande aifier ou l'action humaine qui le comble.
 
+## Risques
+
+Certains constats ne font descendre aucun critère sous 2 et minent pourtant plusieurs critères à la
+fois. Ils ont leur section, avant le détail : branche recevant les fusions sans protection, checks
+requis dont le nom ne correspond à aucun check rapporté, push force autorisé ou administrateurs
+exemptés, label de disponibilité posé par l'agent de l'auteur, couverture configurée jamais
+exécutée. Un risque cite sa preuve, les critères touchés et l'action.
+
 ## Format du rapport
 
 ```
 # assess · <dépôt> · <date>
 
 Verdict : <niveau>              Sources : git, forge (gh) | git seul
+Branches recevant les fusions : <noms>     Fenêtre 90 jours depuis : <date>
+Raison du verdict : <une ligne citant phases et critères décisifs>
 
 | Phase | Note | Niveau | Bloquants |
 |---|---|---|---|
@@ -237,6 +262,9 @@ Axes : C 2,1 · W 1,4 · G 2,6 · H 2,0
 ## Écarts priorisés
 1. [1.1 bloquant] Templates d'issue absents — preuve : .github/ISSUE_TEMPLATE/ vide — cible 2 — `init`
 2. ...
+
+## Risques
+- <constat> — preuve — critères touchés — action
 
 ## Détail par critère
 <critère, note, preuve constatée (chemin ou commande et sortie), non évalué si applicable>
