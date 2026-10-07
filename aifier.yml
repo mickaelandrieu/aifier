@@ -17,7 +17,7 @@ gates:
   root:
     lint: "bash scripts/check.sh"
     typecheck: null
-    test: "AIFIER_SRC=. AIFIER_DIR=skills sh install.sh && bash skills/init/detect.sh . >/dev/null && bash skills/assess/probes.sh . >/dev/null"
+    test: "AIFIER_SRC=. AIFIER_DIR=skills sh install.sh && bash skills/init/detect.sh . >/dev/null && bash skills/assess/probes.sh . >/dev/null && bash tests/run.sh"
     build: null
 ci:
   file: .github/workflows/check.yml
