@@ -84,6 +84,7 @@ The skills, once in your project:
 | `/context` | CDLC | Audits what agents read: stale files, duplicated knowledge, hot / warm / cold tiering, load per session. |
 | `/compound` | 6 and 9 | Captures a lesson as a learned rule, with a wrong example, a right example and an executable detection. Two modes: pre-release and incident. |
 | `/status` | all | Where the project stands against the eleven phases, and the next gap. |
+| `/gate` | 1 to 3 | Where an issue stands in the cycle, in one line that names the facts it rests on: not qualified, needs input, qualified, planned, chosen, in progress. |
 | `/qualify` | 1 Define | Rewrites a raw issue into the two-audience contract (problem, impact, observable acceptance criteria, folded technical analysis), sets the label, and stops: a human confirms the intent. |
 | `/plan` | 2 Plan | From a qualified issue, two or three approaches that diverge in strategy, with trade-offs, risks, the rules they honour and a recommendation; posted on the issue, then stops: a human replies `approach: <letter>`. |
 | `/build` | 3 Build | From the chosen approach, cuts the branch from the target base, loads the rules and area guides before the first edit, builds one slice, runs the gates and opens a PR ending with a Verification Run. Never merges. |

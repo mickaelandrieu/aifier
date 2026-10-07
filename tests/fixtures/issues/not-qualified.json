@@ -1,0 +1,9 @@
+{
+  "issue": {
+    "number": 7,
+    "body": "The export button does nothing when the list is empty. Please fix.",
+    "labels": [],
+    "comments": []
+  },
+  "prs": []
+}

@@ -1,0 +1,57 @@
+{
+  "issue": {
+    "number": 7,
+    "body": "## Problem\n\nThe export button does nothing when the list is empty.\n\n## Impact\n\nSupport receives one ticket a week; unknown cost.\n\n## Acceptance criteria\n\n- [ ] When the list is empty and the export button is pressed, then a message says there is nothing to export.\n\n<details><summary>Technical analysis</summary>\n\nAffected areas: `web` (guide: `web/AGENTS.md`)\nSuspected cause: `web/src/export.ts:12`\nConstraints: RULE-001\nNon-binding approach: left to plan\nOpen questions: none\n\n</details>",
+    "labels": [
+      {
+        "name": "sdlc:in-progress"
+      },
+      {
+        "name": "bug"
+      }
+    ],
+    "comments": [
+      {
+        "author": {
+          "login": "fixture-author"
+        },
+        "body": "Qualified.",
+        "createdAt": "2026-09-10T10:00:00Z"
+      },
+      {
+        "author": {
+          "login": "fixture-author"
+        },
+        "body": "## Plan\n\n### Approach A — Guard in the handler\nWhat changes: the handler returns a message when the list is empty.\nTouches: `web`: `src/export.ts`; protected: no\nSlices: one PR\nHonours: RULE-001\nTrade-offs: + small / − the rule lives in the adapter\nRisk: none noticed\nProof: new test: empty list yields the message\nEffort: S\n\n### Approach B — Disable the button\nWhat changes: the button is disabled while the list is empty.\nTouches: `web`: `src/list.ts`; protected: no\nSlices: one PR\nHonours: RULE-001\nTrade-offs: + nothing to press / − no message\nRisk: screen readers\nProof: new test: button disabled on empty list\nEffort: S\n\n### Recommendation\nA.\n### To decide\nReply with `approach: <letter>`.",
+        "createdAt": "2026-09-11T10:00:00Z"
+      },
+      {
+        "author": {
+          "login": "fixture-maintainer"
+        },
+        "body": "approach: A",
+        "createdAt": "2026-09-12T09:00:00Z"
+      }
+    ]
+  },
+  "prs": [
+    {
+      "number": 41,
+      "body": "Unrelated change. Closes #70.",
+      "closingIssuesReferences": [
+        {
+          "number": 70
+        }
+      ]
+    },
+    {
+      "number": 42,
+      "body": "Guard the export handler on an empty list.\n\nCloses #7",
+      "closingIssuesReferences": [
+        {
+          "number": 7
+        }
+      ]
+    }
+  ]
+}

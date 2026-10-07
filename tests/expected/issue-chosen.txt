@@ -1,0 +1,1 @@
+state: chosen A (shape: ok, labels: sdlc:todo sdlc:needs-input, plan comment: comment 2 of 4, approach reply: A by fixture-maintainer on 2026-09-12, open PR: none)
