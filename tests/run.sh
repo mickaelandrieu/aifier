@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Deterministic tests for the two collectors: builds the fixtures, runs detect.sh and probes.sh on
-# each, normalises the output and diffs it against tests/expected/. No network, no gh.
+# Deterministic tests for the collectors: builds the fixtures, runs detect.sh and probes.sh on
+# each, normalises the output and diffs it against tests/expected/; then runs gate.sh on each saved
+# issue payload under tests/fixtures/issues/ and diffs its state line the same way. No network, no gh.
 #
 # How the output is made stable:
 # - a shim directory is prepended to PATH with `gh` and `gitleaks` that exit 1, so both collectors
@@ -40,6 +41,14 @@ for fx in two-stacks docs-only dormant with-secret; do
     if [ "${UPDATE:-}" = 1 ]; then cp "$work/$fx.$kind" "$expected"; continue; fi
     if ! diff -u "$expected" "$work/$fx.$kind"; then echo "tests: $fx $kind differs"; fail=1; fi
   done
+done
+# gate.sh decides from the payload alone (--from): the gh shim is never reached
+for fx in tests/fixtures/issues/*.json; do
+  name="issue-$(basename "$fx" .json)"
+  bash skills/gate/gate.sh --from "$fx" --prefix sdlc > "$work/$name.txt"
+  expected="tests/expected/$name.txt"
+  if [ "${UPDATE:-}" = 1 ]; then cp "$work/$name.txt" "$expected"; continue; fi
+  if ! diff -u "$expected" "$work/$name.txt"; then echo "tests: $name differs"; fail=1; fi
 done
 [ "${UPDATE:-}" = 1 ] && { echo "tests: expected files regenerated"; exit 0; }
 [ "$fail" = 0 ] && echo "tests: OK"
