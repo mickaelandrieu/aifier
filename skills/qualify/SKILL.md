@@ -17,16 +17,16 @@ the states.
 ## Step 0 — Read, do not write yet
 
 1. Ask the gate where the issue named by `$ARGUMENTS` stands, a number or a URL passed as given
-   (`N` below is the number): `bash "<skills directory this file lives in>/gate/gate.sh"
+   (`N` below is the number): `bash "<directory of this SKILL.md>/../gate/gate.sh"
    $ARGUMENTS --repo {{repo}} --prefix {{label_prefix}}`. No argument: ask for one and stop. A
    non-zero exit has printed `BLOCKED: <reason>`: repeat that line and stop, there is no prose
    fallback. Quote the printed `state:` line in the report.
 2. Act on the printed state. `not-qualified` with `shape: missing`: continue, this is the issue to
    qualify. `not-qualified` with `shape: ok`: do not rewrite; set the label (Step 2) and say the
    body was already in shape. `qualified`, `qualified (partial)`, `needs-input`, `planned`,
-   `chosen <letter>`: say "already qualified" with the state and stop. `in-progress`: say which
-   label or pull request the line names and stop; qualification happens before work, not during
-   it.
+   `chosen <letter>`: say "already qualified" with the state and stop. `in-progress`: name every
+   label and pull request the line carries and stop; qualification happens before work, not
+   during it.
 3. Fetch the issue: `gh issue view N --repo {{repo}} --json title,body,labels,comments,author`
    (GitLab: `glab issue view N`).
 4. Read what grounds the technical part: the constitution, the area guide of each directory the
@@ -101,11 +101,15 @@ In the chat, not on the issue:
 
 ```
 ## Qualify — #N — <date>
-State: todo | needs-input | already qualified
+Gate: <the printed state: line, verbatim>
+State: todo | needs-input | already qualified | stopped
 Criteria: <count> observable, <count> open questions
 Grounding: <files opened>; claims VERIFIED <count>, INFERRED <count>
-Stopped at: intent gate (human confirms the contract)
+Stopped at: intent gate (human confirms the contract) | Step 0 (<state>, nothing written) | BLOCKED (<reason>)
 ```
+
+On a stop at Step 0 or on `BLOCKED`, fill `Gate`, `State: stopped` and `Stopped at`; leave the
+other lines out.
 
 ## What `qualify` does not do
 
