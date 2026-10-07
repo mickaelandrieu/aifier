@@ -14,6 +14,9 @@ for f in skills/*/SKILL.md; do
   keys="$(awk '/^---$/{c++; next} c==1 {print $1}' "$f" | tr -d ':' | sort | tr '\n' ' ')"
   [ "$keys" = "description name " ] || { echo "$f: frontmatter must be exactly name and description, got: $keys"; fail=1; }
 done
+# the gate decision is written once, in skills/gate/gate.sh: the cycle skills must not paraphrase it
+drift="$(grep -nE 'Contract shape|## Plan. heading|login not ending' skills/qualify/SKILL.md skills/plan/SKILL.md skills/build/SKILL.md || true)"
+[ -n "$drift" ] && { echo "gate logic paraphrased in a cycle skill (it lives in skills/gate/gate.sh):"; echo "$drift"; fail=1; }
 allowed='protected_paths|project|project_summary|default_branch|target_branch|label_prefix|language|repo|forge|engines|stack|dir|name|path|date|guards|required_checks|ci_file|area\.(name|dir|summary|layout|commands|patterns)|gates\.(lint|typecheck|test|build)|memory\.(rules|decisions|handoff)'
 bad="$(grep -rhoE '\{\{[a-z_.]+\}\}' skills templates | sort -u | grep -vE "^\{\{($allowed)\}\}$" || true)"
 [ -n "$bad" ] && { echo "unknown placeholders: $bad"; fail=1; }

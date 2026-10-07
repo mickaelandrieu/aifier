@@ -3,6 +3,21 @@
 Read at session start, update before stopping. Keep it under forty lines: current branch and
 goal, what is done and proven, what is blocked, the next step.
 
+## 2026-10-08 (slice 2)
+
+- Branch `feat/13-cycle-skills-call-gate` (based on `feat/cycle-skills`, which carries slice 1,
+  PR #15 not merged yet; the pull request targets `feat/cycle-skills`), issue #13, approach A,
+  slice 2 of 2: `qualify`, `plan` and `build` drop their own gate vocabulary and Step 0 and act on
+  the line `gate/gate.sh` prints, `BLOCKED` when it cannot run; `init` copies `gate` with the
+  cycle skills; `scripts/check.sh` fails when a cycle skill paraphrases the gate logic again.
+- Proven: `bash scripts/check.sh` with the new drift check, the test gate (six issue fixtures
+  unchanged), `gate.sh 13` on this repository quoted in the pull request. Blocked: the blind runs
+  of the three rewritten skills (RULE-006), to be run by a person with `scripts/blind-run.sh`
+  before `feat/cycle-skills` merges; their friction lists go on the pull request.
+- Next: blind runs, then a human merges #15 and this pull request into `feat/cycle-skills`, then
+  `feat/cycle-skills` into `main`; later, `done`/`partial` states for `status` (issue author's
+  answer 1).
+
 ## 2026-10-08 (later)
 
 - Branch `feat/13-gate-collector` (based on `feat/cycle-skills`, PR #12 not merged yet), issue #13,
