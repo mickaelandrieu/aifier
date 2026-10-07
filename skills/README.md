@@ -8,7 +8,14 @@ aifier. Nothing here is copied verbatim into a client repository.
 
 The `assess` skill is the exception: it runs from this repository against any target, read-only.
 
-Starter set, rendered by `init`: process rules (branch from the target base, PR targets its base,
-health gate), verification evidence (no claim without captured output), review checklist,
-adversarial test plan, ADR template, documentation rules, and the learned-rules catalogue with its
-capture command.
+| Skill | Role |
+|---|---|
+| `assess` | Read-only maturity audit of any repository against the eleven phases; runs from this repo, not rendered. |
+| `init` | Brings a repository to the Setup phase: detects the stack, confirms `aifier.yml`, renders constitution, templates, memory and the skills below. |
+| `verification-evidence` | The proof discipline: no gate claimed without captured output, environment preflight, `## Verification Run` section, `BLOCKED` verdict, no ready label on self-report. |
+| `review-checklist` | Structured review (architecture, correctness, security, behaviour tests, consistency) with the PR health gate, a drift level and the learned-rule question. |
+| `adversarial-test-plan` | Adversarial QA: attack categories, numbered plan, strict verdicts and severities, PLAN versus EXECUTE modes. |
+| `decision-record` | When to write an ADR, `NNNN-slug.md` naming under the decisions directory, the template, supersession. |
+| `compound` | Captures a lesson as a learned rule, pre-release (Compound-1) or from an incident (Compound-2), with admission criterion and de-duplication. |
+| `process-rules` | Starter catalogue of process rules PR-001 to PR-010: branching, PR base, lowest layer, health gate, proof, git hygiene, grounded claims, preflight. |
+| `documentation-rules` | Diátaxis decision guide and checklists, docs in the same PR as the code, every claim verified against source, no dead path. |

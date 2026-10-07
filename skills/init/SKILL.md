@@ -14,7 +14,7 @@ measure them.
 bash "<directory of this SKILL.md>/detect.sh" . > "$OUT/aifier.draft.yml"
 ```
 
-`$OUT` is a directory outside the repository. Read the draft. It is deterministic: forge, default
+`$OUT` is a directory outside the repository. Read the draft. Without a POSIX shell, derive the same facts yourself from the manifests, following the script as a checklist, and say so. It is deterministic: forge, default
 branch, language guess, engines present, one area per directory holding a manifest, the gate
 commands found in each manifest, the CI file, and the `existing:` list of files `init` would
 otherwise create. Do not edit the draft by hand; what detection got wrong is a question for the

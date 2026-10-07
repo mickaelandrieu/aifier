@@ -40,7 +40,9 @@ prints is a citable proof; cite it by section and line in the report.
 bash "<directory of this SKILL.md>/probes.sh" "$REPO" > "$OUT/probes.md"
 ```
 
-Read `$OUT/probes.md` in full before anything else. Criteria whose evidence the collector does not
+Read `$OUT/probes.md` in full before anything else. Without a POSIX shell (native Windows without WSL or
+Git Bash), run the same probes yourself with the tools you have, following the script as a
+checklist, and say in the report that the collection was manual. Criteria whose evidence the collector does not
 reach (reviews on individual PRs, check runs as reported, plans on open issues, grep-only
 criteria) use the samples below.
 

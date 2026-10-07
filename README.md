@@ -56,6 +56,10 @@ skills are plain `SKILL.md` files that Claude Code, opencode and pi all load.
 curl -fsSL https://raw.githubusercontent.com/mickaelandrieu/aifier/main/install.sh | sh
 ```
 
+Requires a POSIX shell with `git`, `curl` and `tar` (macOS, Linux, WSL, Git Bash); `gh` and `jq`
+enrich the forge section. Native Windows comes with the V2 binary. Until the repository is public,
+clone it and run `AIFIER_SRC=/path/to/aifier sh install.sh`.
+
 Then, in your agent: `/assess` to measure, `/init` to set up. `init` detects your stack, shows
 the `aifier.yml` it inferred, asks the rest, and renders. Nothing in the daily life of the
 project calls aifier afterwards.
