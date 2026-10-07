@@ -159,3 +159,15 @@ on your own codebase before the generator lands.
 ## License
 
 [MIT](LICENSE).
+
+## Trying `assess` today
+
+The `assess` skill is runnable from a checkout. In any coding agent that reads skills
+(Claude Code, opencode, pi), point it at `skills/assess/SKILL.md` and give it the path of the
+repository to audit. The evidence collector alone, useful on its own:
+
+```bash
+bash skills/assess/probes.sh /path/to/repo
+```
+
+It needs `git`, and `gh` + `jq` for the GitHub section (which degrades gracefully without them).
