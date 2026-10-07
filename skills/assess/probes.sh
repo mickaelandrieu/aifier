@@ -133,6 +133,12 @@ if have gh && gh auth status >/dev/null 2>&1 && gh repo view --json nameWithOwne
     rules=$(gh api "repos/$repo/rules/branches/$def" 2>/dev/null | jq -r '[.[].type] | join(", ")' 2>/dev/null)
     line "branch protection on $def: ${rules:+rulesets: $rules}${rules:-none}"
   fi
+  line "reviews on the last 6 merged PRs (number base author mergedBy reviews):"
+  gh pr list --state merged --limit 6 --json number,author,mergedBy,reviews,baseRefName -q '.[] | "  - #\(.number) \(.baseRefName) \(.author.login) -> \(.mergedBy.login // "?") [\([.reviews[] | "\(.author.login):\(.state)"] | join(","))]"' 2>/dev/null
+  last=$(gh pr list --state merged --limit 1 --json number -q '.[0].number' 2>/dev/null)
+  line "checks reported on PR #${last:-?}: $(gh pr view "$last" --json statusCheckRollup -q '[.statusCheckRollup[] | "\(.name // .context)=\(.conclusion // .state)"] | join(", ")' 2>/dev/null)"
+  rs=$(gh api "repos/$repo/rulesets" 2>/dev/null)
+  case "$rs" in *'"message"'*) line "rulesets: not observable ($(echo "$rs" | jq -r .status 2>/dev/null))";; *) line "rulesets: $(echo "$rs" | jq -r '[.[] | "\(.name) (\(.enforcement))"] | join(", ")' 2>/dev/null)";; esac
   line "labels: $(gh label list --limit 100 --json name -q '[.[].name] | join(", ")' 2>/dev/null)"
   line "open issues: $(gh issue list --state open --limit 1 --json number -q 'length' 2>/dev/null), open PRs: $(gh pr list --state open --limit 1 --json number -q 'length' 2>/dev/null)"
   line "last 20 closed issues: with acceptance criteria wording / with a template-like structure / total:"

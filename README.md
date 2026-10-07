@@ -49,17 +49,16 @@ aifier brings a repository to the **Setup** phase of the
 gates (intent, architecture, acceptance), two capitalisation points (before release, from
 production).
 
-aifier is a **generator**. It runs when you install it and when you update it, and never
-afterwards. It inspects your repository, asks what it cannot infer, and renders files for the
-engine you use: Claude Code, opencode or pi. Those files work on their own. Nothing in the daily
-life of the project calls aifier.
+aifier is installed once into your repository and then runs **inside your coding agent**: the
+skills are plain `SKILL.md` files that Claude Code, opencode and pi all load.
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/mickaelandrieu/aifier/main/install.sh | sh
-aifier init      # detect, ask, render
-aifier update    # refresh generated files, leave yours alone
-aifier remove    # remove exactly what was installed
 ```
+
+Then, in your agent: `/assess` to measure, `/init` to set up. `init` detects your stack, shows
+the `aifier.yml` it inferred, asks the rest, and renders. Nothing in the daily life of the
+project calls aifier afterwards.
 
 What `init` renders into your project:
 
@@ -138,20 +137,23 @@ The method pages live in [`method/`](method/), starting with the
 ## Layout
 
 ```
+install.sh       one-line installer: copies skills/ into .agents/skills/
 method/          the method, one page per phase and per concept
-skills/          templates of the portable skills rendered into your project
+skills/          the portable skills: assess, init, and the knowledge skills rendered into your project
+templates/       files init renders (constitution, area guides, templates, memory, aifier.yml)
 packs/           optional stack packs (python-hexagonal, react, playwright, ...)
-adapters/        per-engine rendering: layouts, hooks, memory for Claude Code, opencode and pi
+adapters/        V2: per-engine guards and memory for Claude Code, opencode and pi
 ```
 
 ## Status
 
-Early design, documentation first. The method, the `assess` grid and the `/assess` skill are
-written and the skill has been run end to end on a production codebase. Its evidence collector,
-`skills/assess/probes.sh`, runs on its own against any repository (`git`, plus `gh` and `jq` for
-the forge section). The generator is
-specified in [issue #1](https://github.com/mickaelandrieu/aifier/issues/1); the other skills in
-issues #3 to #6. All of it is distilled from an agent framework that has run for months on a
+**V1, skill-based.** `install.sh` copies the skills into `.agents/skills/`; `/assess` and
+`/init` run inside the engine, with deterministic scripts for evidence (`skills/assess/probes.sh`)
+and detection (`skills/init/detect.sh`). `/assess` has been run end to end on a production
+codebase and on a classic project; `/init` has been rendered on the latter. Guards and the
+standalone generator binary are V2, specified in
+[issue #1](https://github.com/mickaelandrieu/aifier/issues/1); `/gates`, `/context`,
+`/compound` and `/status` are issues #3 to #6. All of it is distilled from an agent framework that has run for months on a
 production GenAI platform, with a label-driven workflow, a proof discipline and a catalogue of
 twenty-plus learned rules.
 
