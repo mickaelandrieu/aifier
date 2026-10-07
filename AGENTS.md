@@ -43,4 +43,5 @@ bash skills/init/detect.sh . >/dev/null && bash skills/assess/probes.sh . >/dev/
 ```
 
 Run the two collectors against a second, classic repository before changing them: a change that
-only works on this repository is not a change.
+only works on this repository is not a change. A skill ships only after a blind run
+(`scripts/blind-run.sh <repo> <skill>` prepares it); its friction list goes in the pull request.

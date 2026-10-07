@@ -39,8 +39,25 @@ Wait for the answers. Write the confirmed `aifier.yml` at the repository root.
 
 ## Step 3 — Render
 
-Templates live in `templates/` next to this file; placeholders are `{{name}}`, lists repeat
-between `{{#list}}` and `{{/list}}`. Render, in this order:
+Templates live in `templates/` next to this file. The rendering is deterministic: run the
+renderer, then fill only what it leaves for you.
+
+```bash
+python3 -I "<directory of this SKILL.md>/render.py" aifier.yml "<directory of this SKILL.md>/templates" . --skills "<project skills dir>"
+```
+
+It writes every target below, skips a file that already exists (so the merge, side-file and skip
+choices of Step 2 are honoured by renaming or removing before, never by `--force` on a file the
+person did not mark merge), drops the lines whose gate is `null`, substitutes the knowledge
+skills in place with the gates of the area that owns the most of them, and prints what it wrote.
+Without `python3`, render by hand from the table below with the same rules. Then open each
+written file and fill the placeholders it left: `{{project_summary}}` (two sentences from the
+README and the manifests) and, in each area guide, `{{area.summary}}`, `{{area.layout}}`,
+`{{area.commands}}`, `{{area.patterns}}` from what the repository already documents. When the
+person chose **merge** for an existing context file, that content is the source for these
+fields: move the area-specific part into the guide, the general part into the constitution,
+drop what contradicts the constitution's rules and list it in the manifest. Cite nothing you did
+not read. The target table, for the record:
 
 | Template | Target | Rule |
 |---|---|---|
@@ -74,7 +91,9 @@ Write `.aifier/manifest.yml` with these keys: `ref` (from `.aifier/install.yml`)
 `item: reason`, at least `guards: not available in V1` and `labels: not created, command printed`),
 `answers` (the confirmed questions).
 
-Print the forge commands `init` does not run, filled from `aifier.yml`, for the person to copy:
+Show the forge commands below, filled from `aifier.yml`, and ask the person once: "run them
+now?". Run exactly the ones the person approves, and record the answer in the manifest. Never run
+them unasked.
 
 ```bash
 # workflow labels (idempotent)
@@ -99,8 +118,8 @@ Do not commit; the person reviews the diff and commits on a branch.
 
 ## What `init` does not do
 
-- change the forge: no labels, no branch protection, no settings. It prints the `gh` or `glab`
-  commands the person can run.
-- redistribute a long existing context file on its own authority: it proposes the split in the
-  merge choice and does the move only when the person says merge.
+- change the forge without a yes: labels and branch protection are shown first, run only on
+  approval.
+- redistribute a long existing context file on its own authority: it does the move only when
+  the person says merge; `/context` is the skill that proposes the split and audits it later.
 - run the gates: that is `gates`.
