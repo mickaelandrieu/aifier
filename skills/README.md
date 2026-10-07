@@ -11,6 +11,7 @@ The `assess` skill is the exception: it runs from this repository against any ta
 | Skill | Role |
 |---|---|
 | `assess` | Read-only maturity audit of any repository against the eleven phases; runs from this repo, not rendered. |
+| `context` | audits what agents read: stale claims, dead paths, duplication, load per session, tiering and the split proposal for a long context file |
 | `init` | Brings a repository to the Setup phase: detects the stack, confirms `aifier.yml`, renders constitution, templates, memory and the skills below. |
 | `verification-evidence` | The proof discipline: no gate claimed without captured output, environment preflight, `## Verification Run` section, `BLOCKED` verdict, no ready label on self-report. |
 | `review-checklist` | Structured review (architecture, correctness, security, behaviour tests, consistency) with the PR health gate, a drift level and the learned-rule question. |
