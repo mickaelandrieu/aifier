@@ -25,13 +25,17 @@ else
   src="$(find "$tmp" -maxdepth 1 -mindepth 1 -type d | head -1)"
 fi
 mkdir -p "$DEST"
-# skills are the portable unit: every engine (Claude Code, opencode, pi) reads SKILL.md
-for d in "$src"/skills/*/; do
-  name="$(basename "$d")"
-  rm -rf "$DEST/$name"; cp -R "$d" "$DEST/$name"
-done
-# templates travel with init so the skill is self-contained once installed
-rm -rf "$DEST/init/templates"; cp -R "$src/templates" "$DEST/init/templates"
+if [ "$(cd "$DEST" && pwd -P)" = "$(cd "$src/skills" && pwd -P)" ]; then
+  echo "aifier: installing into its own skills directory, nothing to copy"
+else
+  # skills are the portable unit: every engine (Claude Code, opencode, pi) reads SKILL.md
+  for d in "$src"/skills/*/; do
+    name="$(basename "$d")"
+    rm -rf "$DEST/$name"; cp -R "$d" "$DEST/$name"
+  done
+  # templates travel with init so the skill is self-contained once installed
+  rm -rf "$DEST/init/templates"; cp -R "$src/templates" "$DEST/init/templates"
+fi
 mkdir -p .aifier
 {
   echo "ref: $REF"; echo "installed_at: $(date +%F)"; echo "skills_dir: $DEST"
@@ -41,7 +45,7 @@ mkdir -p .aifier
 if [ "$DEST" != ".claude/skills" ] && [ ! -e .claude/skills ]; then
   mkdir -p .claude && ln -s "../$DEST" .claude/skills && echo "aifier: linked .claude/skills -> $DEST"
 fi
-echo "aifier: installed $(ls "$DEST" | wc -l | tr -d ' ') skills into $DEST"
+echo "aifier: installed $(find "$DEST" -mindepth 2 -maxdepth 2 -name SKILL.md | wc -l | tr -d ' ') skills into $DEST"
 echo "aifier: next, in your coding agent run /assess then /init"
 }
 main "$@"

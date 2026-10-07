@@ -25,13 +25,15 @@ for m in $(git ls-files | grep -E '(^|/)(pyproject\.toml|package\.json|go\.mod|C
   d="$(dirname "$m")"; areas="$areas $d"
 done
 areas="$(printf '%s\n' $areas | sort -u)"
+# no manifest at all: a documentation or configuration repository is still one area
+[ -z "$areas" ] && areas="."
 # a root package.json without scripts is tooling residue, not an area, when sub-areas exist
 if [ "$(printf '%s\n' $areas | wc -l)" -gt 1 ] && [ -f package.json ] && have jq && [ "$(jq '.scripts // {} | length' package.json)" = "0" ]; then
   areas="$(printf '%s\n' $areas | grep -vx '.')"
 fi
 yq "areas:"
 for d in $areas; do
-  stack="unknown"; dd="$d/"; [ "$d" = "." ] && dd=""
+  stack="docs"; dd="$d/"; [ "$d" = "." ] && dd=""
   if [ -f "${dd}pyproject.toml" ]; then stack="python"; grep -qi fastapi "${dd}pyproject.toml" && stack="python-fastapi"; grep -qi django "${dd}pyproject.toml" && stack="python-django"; fi
   if [ -f "${dd}package.json" ]; then stack="node"; grep -q '"next"' "${dd}package.json" && stack="nextjs-react" || { grep -q '"react"' "${dd}package.json" && stack="react"; }; fi
   [ -f "${dd}go.mod" ] && stack="go"; [ -f "${dd}Cargo.toml" ] && stack="rust"; { [ -f "${dd}pom.xml" ] || ls "${dd}"build.gradle* >/dev/null 2>&1; } && stack="jvm"
@@ -71,3 +73,4 @@ yq "guards: []"
 yq "memory:"; yq "  rules: docs/learned-rules.md"; yq "  decisions: docs/decisions/"; yq "  handoff: docs/handoff.md"
 yq "existing:"
 for f in AGENTS.md CLAUDE.md .github/PULL_REQUEST_TEMPLATE.md .github/ISSUE_TEMPLATE docs/adr docs/decisions CHANGELOG.md CONTRIBUTING.md; do [ -e "$f" ] && yq "  - $f ($(wc -l < "$f" 2>/dev/null | tr -d ' ') lines)"; done
+exit 0

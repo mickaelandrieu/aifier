@@ -1,0 +1,16 @@
+name: check
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/check.sh
+      - name: smoke the installer and the collectors on this repository
+        run: |
+          AIFIER_SRC=. AIFIER_DIR=skills sh install.sh
+          bash skills/init/detect.sh . > /tmp/draft.yml && grep -q '^project: aifier' /tmp/draft.yml
+          bash skills/assess/probes.sh . > /tmp/probes.md && grep -q '^## Identity' /tmp/probes.md
