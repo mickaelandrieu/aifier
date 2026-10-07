@@ -9,27 +9,34 @@ and one ahead (acceptance, held by the reviewer and the maintainer). You cross n
 Before the first command, read `verification-evidence/SKILL.md` and `process-rules/SKILL.md`
 from the skills directory this file lives in.
 
-Vocabulary used below. **Contract shape**: the body has the `## Problem`, `## Impact` and
-`## Acceptance criteria` headings and a `<details>` block whose summary is `Technical analysis`.
-**Area guide**: the nearest `AGENTS.md` above a directory; the constitution when there is none.
-**Human reply**: a comment whose first line starts with `approach: <letter>` and whose author is
-not a bot account (login not ending in `[bot]`); its remaining lines are the amendments. Agents
-never write that line. A gate whose value is `null` is **none**: not run, not `BLOCKED`, reported
-as `none`. Dates are `YYYY-MM-DD`.
+Vocabulary used below. **Area guide**: the nearest `AGENTS.md` above a directory; the
+constitution when there is none. **Approach reply**: the comment `gate.sh` reports as `approach
+reply: <letter> by <login> on <date>`; its remaining lines are the amendments. Agents never write
+that line. A gate whose value is `null` is **none**: not run, not `BLOCKED`, reported as `none`.
+Dates are `YYYY-MM-DD`. Where an issue stands (its shape, its labels, its comments, the open pull
+requests) is decided by one script, `gate.sh`, never by this skill: the `gate` skill next to it
+documents the states.
 
 ## Step 0 — Check the gates behind you
 
-1. Fetch the issue named by `$ARGUMENTS`, a number or a URL: `gh issue view N --repo {{repo}}
-   --json title,body,labels,comments`. No argument: ask and stop.
-2. Qualified: contract shape **and** label `{{label_prefix}}:todo` or `{{label_prefix}}:partial`
-   (a previous slice landed). Otherwise stop and say `/qualify N`.
-3. Planned and chosen: a comment with a `## Plan` heading, and a later human reply. The chosen
-   approach plus its amendments is your specification. No plan: stop and say `/plan N`. Plan
-   without reply: stop and say "waiting for `approach:` on #N". Never infer the choice from the
-   recommendation, from a reaction, or from the person asking you to build.
-4. Already in progress: label `{{label_prefix}}:in-progress`, or an open pull request that
-   references the issue (`gh pr list --repo {{repo}} --state open --search "#N"`). Say which,
-   and continue on that branch only if the person confirms; then skip Step 2.
+1. Ask the gate where the issue named by `$ARGUMENTS` stands, a number or a URL passed as given
+   (`N` below is the number): `bash "<directory of this SKILL.md>/../gate/gate.sh"
+   $ARGUMENTS --repo {{repo}} --prefix {{label_prefix}}`. No argument: ask and stop. A non-zero
+   exit has printed `BLOCKED: <reason>`: repeat that line and stop, there is no prose fallback.
+   Quote the printed `state:` line in the report.
+2. Act on the printed state. `chosen <letter>`: continue, that approach plus the amendments of its
+   reply is your specification. `not-qualified` or `needs-input`: stop and say `/qualify N`.
+   `qualified` or `qualified (partial)`: stop and say `/plan N`. `planned`: stop and say "waiting
+   for `approach:` on #N". Never infer the choice from the recommendation, from a reaction, or
+   from the person asking you to build: the letter comes from the printed line or there is none.
+3. `in-progress`: name every label and pull request the line carries, then fetch the issue
+   (item 4) and ask the person once: "continue on the branch of PR #M?" naming the pull request
+   whose base matches this slice (the approach reply may name the branch instead). Without a
+   yes, stop. On yes: `gh pr checkout M`, then run the clean-tree check and the fetch of Step 2
+   and skip only the `checkout -b` and the label command. The approach is still the one the
+   line's `approach reply:` names; `none` there is "waiting for `approach:` on #N".
+4. Fetch the issue to read the plan and the reply: `gh issue view N --repo {{repo}} --json
+   title,body,labels,comments`.
 
 ## Step 1 — Load before editing
 
@@ -70,6 +77,11 @@ single unnamed slice). `--remove-label` on an absent label is harmless.
 - Documentation changes in the same PR when the slice changes behaviour the docs describe.
 - Update `{{memory.handoff}}` as part of the slice: branch, slice, what is proven, what is blocked,
   next slice. It is committed with the slice, so the tree is clean for the next run.
+- Commit when the gates of Step 4 are green, one commit per slice unless the plan says otherwise:
+  `git add -A && git commit -m "<type>(<scope>): <subject> (#N)"`, the subject in the
+  imperative, the scope the area or skill touched, nothing else in the message. Confirm with
+  `git status --porcelain` (empty) and `git log --oneline -1` (process rule PR-009). The PR title
+  of Step 5 reuses that subject.
 
 ## Step 4 — Verify, with proof
 
@@ -117,11 +129,14 @@ report: it is `compound`'s input, run it when the person asks.
 
 ```
 ## Build — #N — <date>
+Gate: <the printed state: line, verbatim>
 Approach: <letter> (chosen by <login> on <date>)
 Branch: <name> → PR #M
 Slice: <name>, <count> of <total>
 Rules honoured: RULE-NNN, ...
 Verification Run: lint <ok|BLOCKED>, typecheck <ok|BLOCKED|none>, test <ok|BLOCKED>, build <ok|BLOCKED|none>
 Deviations refused: <list or none>
-Stopped at: acceptance gate (review and merge are human)
+Stopped at: acceptance gate (review and merge are human) | Step 0 (<state>, nothing written) | BLOCKED (<reason>)
 ```
+
+On a stop at Step 0 or on `BLOCKED`, fill `Gate` and `Stopped at`; leave the other lines out.

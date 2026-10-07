@@ -73,7 +73,8 @@ not read. The target table, for the record:
 
 Then copy the knowledge skills that agents load, from the skills directory this skill was installed
 in, into the project's skills directory when they are not already there: the cycle skills
-`qualify`, `plan`, `build`, and the knowledge skills `verification-evidence`,
+`gate`, `qualify`, `plan`, `build` (the three call `gate/gate.sh` by its path next to them, so
+`gate` travels with them), and the knowledge skills `verification-evidence`,
 `review-checklist`, `adversarial-test-plan`, `decision-record`, `compound`, `process-rules`,
 `documentation-rules`. Replace their `{{ }}` placeholders with the values of `aifier.yml`: for the per-area gates use
 the area that owns the most gates (the backend in a backend-plus-frontend repository) and say

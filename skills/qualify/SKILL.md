@@ -8,22 +8,27 @@ An idea becomes a contract. The contract is judged by the person who owns the ne
 your job ends when the issue is readable by two audiences and the human gate on intent is
 visibly open. Run inline in the main session.
 
-Vocabulary used below. **Contract shape**: the body has the `## Problem`, `## Impact` and
-`## Acceptance criteria` headings and a `<details>` block whose summary is `Technical analysis`.
-**Area guide**: the nearest `AGENTS.md` above a directory; the constitution at the root when
-there is none. **Catalogue**: `{{memory.rules}}`. Dates are `YYYY-MM-DD`.
+Vocabulary used below. **Area guide**: the nearest `AGENTS.md` above a directory; the
+constitution at the root when there is none. **Catalogue**: `{{memory.rules}}`. Dates are
+`YYYY-MM-DD`. Where an issue stands (its shape, its labels, its comments, the open pull requests)
+is decided by one script, `gate.sh`, never by this skill: the `gate` skill next to it documents
+the states.
 
 ## Step 0 — Read, do not write yet
 
-1. Fetch the issue named by `$ARGUMENTS`, a number or a URL (`gh` accepts both; `N` below is the
-   number): `gh issue view N --repo {{repo}} --json title,body,labels,comments,author`
-   (GitLab: `glab issue view N`). No argument: ask for one and stop.
-2. Contract shape **and** label `{{label_prefix}}:todo`: say "already qualified" and stop.
-   Contract shape without the label: do not rewrite; set the label (Step 2) and say the body was
-   already in shape.
-3. Label `{{label_prefix}}:in-progress` or `{{label_prefix}}:done`, or an open pull request that
-   references it (`gh pr list --repo {{repo}} --state open --search "#N"`): say so and stop.
-   Qualification happens before work, not during it.
+1. Ask the gate where the issue named by `$ARGUMENTS` stands, a number or a URL passed as given
+   (`N` below is the number): `bash "<directory of this SKILL.md>/../gate/gate.sh"
+   $ARGUMENTS --repo {{repo}} --prefix {{label_prefix}}`. No argument: ask for one and stop. A
+   non-zero exit has printed `BLOCKED: <reason>`: repeat that line and stop, there is no prose
+   fallback. Quote the printed `state:` line in the report.
+2. Act on the printed state. `not-qualified` with `shape: missing`: continue, this is the issue to
+   qualify. `not-qualified` with `shape: ok`: do not rewrite; set the label (Step 2) and say the
+   body was already in shape. `qualified`, `qualified (partial)`, `needs-input`, `planned`,
+   `chosen <letter>`: say "already qualified" with the state and stop. `in-progress`: name every
+   label and pull request the line carries and stop; qualification happens before work, not
+   during it.
+3. Fetch the issue: `gh issue view N --repo {{repo}} --json title,body,labels,comments,author`
+   (GitLab: `glab issue view N`).
 4. Read what grounds the technical part: the constitution, the area guide of each directory the
    issue mentions, the catalogue, the titles of the files in `{{memory.decisions}}`, and the files
    the issue names. Cite nothing you did not open.
@@ -96,11 +101,15 @@ In the chat, not on the issue:
 
 ```
 ## Qualify — #N — <date>
-State: todo | needs-input | already qualified
+Gate: <the printed state: line, verbatim>
+State: todo | needs-input | already qualified | stopped
 Criteria: <count> observable, <count> open questions
 Grounding: <files opened>; claims VERIFIED <count>, INFERRED <count>
-Stopped at: intent gate (human confirms the contract)
+Stopped at: intent gate (human confirms the contract) | Step 0 (<state>, nothing written) | BLOCKED (<reason>)
 ```
+
+On a stop at Step 0 or on `BLOCKED`, fill `Gate`, `State: stopped` and `Stopped at`; leave the
+other lines out.
 
 ## What `qualify` does not do
 

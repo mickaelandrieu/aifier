@@ -7,24 +7,27 @@ description: Phase 2 Plan for {{project}} - from a qualified issue, produce two 
 The planner never builds. A human picks the approach; you make that choice informed and cheap.
 Run inline in the main session.
 
-Vocabulary used below. **Contract shape**: the body has the `## Problem`, `## Impact` and
-`## Acceptance criteria` headings and a `<details>` block whose summary is `Technical analysis`.
-**Area guide**: the nearest `AGENTS.md` above a directory; the constitution when there is none.
-**Human reply**: a comment whose first line starts with `approach:` and whose author is not a
-bot account (login not ending in `[bot]`); agents never write that line. Dates are `YYYY-MM-DD`.
+Vocabulary used below. **Area guide**: the nearest `AGENTS.md` above a directory; the
+constitution when there is none. Dates are `YYYY-MM-DD`. Where an issue stands (its shape, its
+labels, its comments, the open pull requests) is decided by one script, `gate.sh`, never by this
+skill: the `gate` skill next to it documents the states. Agents never write an `approach:` reply.
 
 ## Step 0 — Check the gate behind you
 
-1. Fetch the issue named by `$ARGUMENTS`, a number or a URL: `gh issue view N --repo {{repo}}
-   --json title,body,labels,comments`. No argument: ask and stop.
-2. Qualified means contract shape **and** label `{{label_prefix}}:todo`. Shape without the label,
-   or no shape: say "not qualified, run `/qualify N`" and stop. With `{{label_prefix}}:needs-input`
-   and no `## Plan` comment: the author has questions to answer; stop.
-3. A comment with a `## Plan` heading exists:
-   - with a later human reply: say "already planned, approach <X> chosen; run `/build N`" and stop;
-   - without one: say "already planned, waiting for `approach:` on #N" and stop. Re-plan only when
-     the person asks for it explicitly; the new comment then starts with "Supersedes the plan of
-     <date>".
+1. Ask the gate where the issue named by `$ARGUMENTS` stands, a number or a URL passed as given
+   (`N` below is the number): `bash "<directory of this SKILL.md>/../gate/gate.sh"
+   $ARGUMENTS --repo {{repo}} --prefix {{label_prefix}}`. No argument: ask and stop. A non-zero
+   exit has printed `BLOCKED: <reason>`: repeat that line and stop, there is no prose fallback.
+   Quote the printed `state:` line in the report.
+2. Act on the printed state. `qualified` or `qualified (partial)`: continue. `not-qualified`: say
+   "not qualified, run `/qualify N`" and stop. `needs-input`: the author has questions to answer;
+   stop. `in-progress`: name every label and pull request the line carries and stop; planning
+   happens before work, not during it.
+3. `chosen <letter>`: say "already planned, approach <letter> chosen; run `/build N`" and stop.
+   `planned`: say "already planned, waiting for `approach:` on #N" and stop. Re-plan only when
+   the person asks for it explicitly; the new comment's first line is still `## Plan` and its second line is "Supersedes the plan
+   of <date>".
+4. Fetch the issue: `gh issue view N --repo {{repo}} --json title,body,labels,comments`.
 
 ## Step 1 — Load what constrains the plan
 
@@ -32,8 +35,8 @@ Read, in this order, and keep the ids: `{{memory.rules}}` in full, noting the ru
 affected areas; the titles of the files in `{{memory.decisions}}` and the body of any decision the
 technical analysis or an area guide cites; the area guide of each affected directory; the files
 named in the technical analysis. If work on the issue already exists in the tree or on a branch,
-say so in the first line of the plan: the approaches are written from the contract, not from
-that draft.
+say so in the first paragraph under the `## Plan` line: the approaches are written from the
+contract, not from that draft.
 
 `{{protected_paths}}` are paths no approach may touch without saying so, because `build` refuses
 them otherwise. A glob covers files that do not exist yet: creating `skills/x/SKILL.md` under a
@@ -84,7 +87,8 @@ Rules of the plan:
 
 ## Step 3 — Post and stop
 
-Write the plan under a `## Plan` heading to a file, print its path and the two commands, and ask
+Write the plan to a file whose first line is `## Plan` (the line `gate.sh` looks for), print its
+path and the two commands, and ask
 once: "post it?". On yes: `gh issue comment N --repo {{repo}} --body-file <file>` then
 `gh issue edit N --repo {{repo}} --add-label {{label_prefix}}:needs-input`. On no, leave the file.
 Never cut a branch, never edit code, never pick the approach yourself even when one is obviously
@@ -96,9 +100,12 @@ In the chat, not on the issue:
 
 ```
 ## Plan — #N — <date>
+Gate: <the printed state: line, verbatim>
 Approaches: <count>, recommended: <letter>
 Constraints loaded: <count> rules apply (of <total>), <count> decisions, <count> area guides
 Unproven criteria: <list or none>
 Posted: yes | no (file kept at <path>)
-Stopped at: architecture gate (human replies `approach: <letter>`)
+Stopped at: architecture gate (human replies `approach: <letter>`) | Step 0 (<state>, nothing written) | BLOCKED (<reason>)
 ```
+
+On a stop at Step 0 or on `BLOCKED`, fill `Gate` and `Stopped at`; leave the other lines out.
