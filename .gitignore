@@ -3,4 +3,5 @@ node_modules/
 .claude/settings.local.json
 .aifier/install.yml
 .aifier/gates/
+.aifier/bin/
 target/

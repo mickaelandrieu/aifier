@@ -67,10 +67,15 @@ curl -fsSL https://raw.githubusercontent.com/mickaelandrieu/aifier/main/install.
 ```
 
 The installer copies the skills into `.agents/skills/` (and links `.claude/skills` to it for
-Claude Code), writes `.aifier/install.yml`, and stops. Options, as environment variables:
-`AIFIER_DIR` to choose the skills directory, `AIFIER_REF` to pin a branch or a tag, and
+Claude Code), puts the `aifier` binary that `init` renders with under `.aifier/bin/` after
+checking its sha256 against the release, writes `.aifier/install.yml`, and stops. Options, as
+environment variables: `AIFIER_DIR` to choose the skills directory, `AIFIER_REF` to pin a tag
+(`v1.2.3`, which is also what selects the binary: a branch carries none), and
 `AIFIER_SRC=/path/to/a/clone` to install from a local checkout, which is the way while the
-repository is private. Run it again any time to update: it replaces the skills and nothing else.
+repository is private (the binary is then copied from that clone's `target/release/`, built with
+`cargo build --release`). Run it again any time to update: it replaces the skills and the binary
+and nothing else. Linux x86_64 and arm64 (WSL included) and macOS Intel and Apple silicon have a
+binary; elsewhere the installer says so and `init` asks for a build from source.
 
 **2. Measure.** In your agent, run `/assess`. It is read-only: a score per phase, a verdict, the
 gaps in priority order with the action that closes each.

@@ -3,6 +3,15 @@
 Read at session start, update before stopping. Keep it under forty lines: current branch and
 goal, what is done and proven, what is blocked, the next step.
 
+## 2026-10-08 (release)
+
+- Branch `feat/21-release-installer`, issue #21 slice 2 of 3: `release.yml` builds four targets on a
+  `v*` tag and publishes them with `SHA256SUMS`; `install.sh` downloads the asset of `AIFIER_REF`
+  when it is a tag, verifies the checksum, copies `target/release/aifier` from a local checkout;
+  three offline installer tests in `tests/run.sh`. Not merged by the agent.
+- Next: the maintainer pushes a `v0.1.0` tag to prove the release end to end; slice 3 (`init`
+  calls the binary, `render.py` deleted).
+
 ## 2026-10-08 (binary)
 
 - Branch `feat/21-aifier-render`, issue #21 slice 1 of 3: Rust crate, `aifier render`, byte-identical

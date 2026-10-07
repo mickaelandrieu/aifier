@@ -72,6 +72,28 @@ for case in two-stacks aifier; do
   if [ "${UPDATE:-}" = 1 ]; then rm -rf "${expected:?}"; mkdir -p tests/expected/render; cp -R "$out" "$expected"; continue; fi
   if ! diff -r "$expected" "$out"; then echo "tests: render $case differs"; fail=1; fi
 done
+# the installer, offline: from a local checkout into a fixture repository (binary copied from
+# target/release), then from a fake release served over file:// (checksum verified), then a
+# tampered release (must refuse). The skills archive is never downloaded: AIFIER_SRC points here.
+here="$(pwd)"
+inst="$root/docs-only"
+( cd "$inst" && AIFIER_SRC="$here" sh "$here/install.sh" ) > "$work/install-local.out" 2>&1 || { echo "tests: install from local checkout failed"; cat "$work/install-local.out"; fail=1; }
+[ -x "$inst/.aifier/bin/aifier" ] && "$inst/.aifier/bin/aifier" --version | grep -q '^aifier ' || { echo "tests: installer did not copy the binary"; fail=1; }
+grep -q '^binary: .aifier/bin/aifier (copied from' "$inst/.aifier/install.yml" || { echo "tests: install.yml lacks the binary line"; fail=1; }
+rel="$work/release"; mkdir -p "$rel"
+arch="$(uname -m)"; case "$arch" in x86_64|amd64) arch=x86_64;; arm64|aarch64) arch=aarch64;; esac
+case "$(uname -s)" in Linux) tgt="$arch-unknown-linux-musl";; Darwin) tgt="$arch-apple-darwin";; *) tgt="unknown";; esac
+tar -C "$(dirname "$bin")" -czf "$rel/aifier-v0.0.0-$tgt.tar.gz" aifier
+( cd "$rel" && (sha256sum aifier-*.tar.gz 2>/dev/null || shasum -a 256 aifier-*.tar.gz) > SHA256SUMS )
+rm -rf "${inst:?}/.aifier/bin"
+( cd "$inst" && AIFIER_SRC="$here" AIFIER_REF=v0.0.0 AIFIER_RELEASE_URL="file://$rel" sh "$here/install.sh" ) > "$work/install-release.out" 2>&1 || { echo "tests: install from a release failed"; cat "$work/install-release.out"; fail=1; }
+grep -q 'sha256 verified' "$inst/.aifier/install.yml" || { echo "tests: release install did not verify the checksum"; fail=1; }
+printf 'tampered' >> "$rel/aifier-v0.0.0-$tgt.tar.gz"
+if ( cd "$inst" && AIFIER_SRC="$here" AIFIER_REF=v0.0.0 AIFIER_RELEASE_URL="file://$rel" sh "$here/install.sh" ) > "$work/install-tampered.out" 2>&1; then
+  echo "tests: installer accepted a tampered binary"; fail=1
+else
+  grep -q 'checksum mismatch' "$work/install-tampered.out" || { echo "tests: tampered install failed for another reason"; cat "$work/install-tampered.out"; fail=1; }
+fi
 # gate.sh decides from the payload alone (--from): the gh shim is never reached
 for fx in tests/fixtures/issues/*.json; do
   name="issue-$(basename "$fx" .json)"
