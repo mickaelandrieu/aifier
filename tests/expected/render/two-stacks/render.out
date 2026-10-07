@@ -1,0 +1,25 @@
+rendered:
+  - AGENTS.md
+  - CLAUDE.md
+  - .github/ISSUE_TEMPLATE/change.yml
+  - .github/PULL_REQUEST_TEMPLATE.md
+  - docs/learned-rules.md
+  - docs/decisions/README.md
+  - docs/decisions/0000-template.md
+  - docs/handoff.md
+  - api/AGENTS.md
+  - web/AGENTS.md
+  - OUT/skills/build/SKILL.md
+  - OUT/skills/verification-evidence/SKILL.md
+rendered:
+skipped (exist, use --force to overwrite):
+  - AGENTS.md
+  - CLAUDE.md
+  - .github/ISSUE_TEMPLATE/change.yml
+  - .github/PULL_REQUEST_TEMPLATE.md
+  - docs/learned-rules.md
+  - docs/decisions/README.md
+  - docs/decisions/0000-template.md
+  - docs/handoff.md
+  - api/AGENTS.md
+  - web/AGENTS.md
