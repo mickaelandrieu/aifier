@@ -97,7 +97,7 @@ Une idée devient un contrat lisible par quelqu'un qui n'ouvrira jamais le code.
 | 1.1 | **Templates d'issue** (bloquant) | W | `.github/ISSUE_TEMPLATE/*.yml` ou `.gitlab/issue_templates/` | 0 aucun · 1 un template libre · 2 des champs problème, comportement attendu, critères d'acceptation · 3 les 20 dernières issues suivent la structure à 70 % ou plus |
 | 1.2 | **Deux audiences** | W | Une partie haute en langage métier (problème, impact, critères observables) et une partie technique repliée | 0 tout mélangé · 2 la séparation est dans le template · 3 un échantillon d'issues la respecte |
 | 1.3 | **Critères d'acceptation observables** | W | Formulés « quand X, alors Y », vérifiables sans lire le code | 0 absents · 1 présents mais techniques · 2 présents et comportementaux dans le template · 3 présents dans 70 % ou plus des issues fermées récentes |
-| 1.4 | **Qualification outillée** | W | Une commande ou un skill qui réécrit une issue brute dans le contrat, et un état « qualifiée » (label) | 0 rien · 2 la commande existe · 3 l'état est posé sur les issues récentes |
+| 1.4 | **Qualification outillée** | W | Une commande ou un skill qui réécrit une issue brute dans le contrat, et un état « qualifiée » (label) ; aifier rend `qualify` | 0 rien · 2 la commande existe · 3 l'état est posé sur les issues récentes |
 | 1.5 | **Arrêt humain sur l'intention** | W | L'issue qualifiée attend une validation humaine avant plan ou build | 0 l'agent enchaîne · 2 l'arrêt est écrit · 3 l'état du workflow (label) matérialise l'attente |
 
 ## Phase 2 · Plan — gate humain d'architecture
@@ -107,8 +107,8 @@ Plusieurs approches, un humain choisit, avant tout code.
 | # | Critère | Axe | Preuves attendues | 0 → 3 |
 |---|---|---|---|---|
 | 2.1 | **Décisions d'architecture consignées** | C | `docs/adr/`, `docs/decisions/`, format ADR ou équivalent | 0 aucune · 1 une page d'architecture narrative · 2 des ADR datés · 3 au moins un ADR depuis moins de 90 jours et un template d'ADR |
-| 2.2 | **Approches alternatives** | W | Une commande ou un skill qui produit deux ou trois approches distinctes avec compromis et recommandation | 0 rien · 1 des plans dans `docs/plans/` sans alternatives · 2 la commande existe et exige des approches qui divergent en stratégie · 3 des issues ou plans récents montrent l'arbitrage |
-| 2.3 | **Arrêt au gate** (bloquant) | W | Le planificateur ne construit jamais ; un humain choisit (commentaire, label, champ « approche retenue ») | 0 l'agent choisit et construit · 2 l'arrêt est écrit dans les instructions · 3 la trace de l'arbitrage humain est visible sur les issues récentes |
+| 2.2 | **Approches alternatives** | W | Une commande ou un skill qui produit deux ou trois approches distinctes avec compromis et recommandation ; aifier rend `plan` | 0 rien · 1 des plans dans `docs/plans/` sans alternatives · 2 la commande existe et exige des approches qui divergent en stratégie · 3 des issues ou plans récents montrent l'arbitrage |
+| 2.3 | **Arrêt au gate** (bloquant) | W | Le planificateur ne construit jamais ; un humain choisit (commentaire, label, champ « approche retenue ») ; `build` exige ce choix | 0 l'agent choisit et construit · 2 l'arrêt est écrit dans les instructions · 3 la trace de l'arbitrage humain est visible sur les issues récentes |
 | 2.4 | **Règles apprises consultées au plan** | C | Le planificateur charge le catalogue de règles apprises | 0 pas de catalogue · 2 le catalogue est référencé par le planificateur · 3 un plan récent cite une règle |
 | 2.5 | **Ancrage dans le code** | C | Les claims du plan sont tagués vérifiés (`fichier:ligne`) ou inférés | 0 rien · 2 la convention est écrite · 3 appliquée dans un plan récent |
 

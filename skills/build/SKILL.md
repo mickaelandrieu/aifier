@@ -1,0 +1,127 @@
+---
+name: build
+description: Phase 3 Build for {{project}} - from an issue whose approach a human chose, cut a branch from the target base, load the learned rules and area guides before the first edit, build one slice, run the gates with captured output and open a pull request that ends with a Verification Run. Never merges, never picks the approach. Argument - an issue number or URL.
+---
+<!-- placeholders: {{project}} {{repo}} {{target_branch}} {{label_prefix}} {{memory.rules}} {{memory.handoff}} {{protected_paths}} {{gates.lint}} {{gates.typecheck}} {{gates.test}} {{gates.build}} -->
+
+Build one slice, under the rules, with proof. Two gates stand behind you (intent, architecture)
+and one ahead (acceptance, held by the reviewer and the maintainer). You cross none of them.
+Before the first command, read `verification-evidence/SKILL.md` and `process-rules/SKILL.md`
+from the skills directory this file lives in.
+
+Vocabulary used below. **Contract shape**: the body has the `## Problem`, `## Impact` and
+`## Acceptance criteria` headings and a `<details>` block whose summary is `Technical analysis`.
+**Area guide**: the nearest `AGENTS.md` above a directory; the constitution when there is none.
+**Human reply**: a comment whose first line starts with `approach: <letter>` and whose author is
+not a bot account (login not ending in `[bot]`); its remaining lines are the amendments. Agents
+never write that line. A gate whose value is `null` is **none**: not run, not `BLOCKED`, reported
+as `none`. Dates are `YYYY-MM-DD`.
+
+## Step 0 — Check the gates behind you
+
+1. Fetch the issue named by `$ARGUMENTS`, a number or a URL: `gh issue view N --repo {{repo}}
+   --json title,body,labels,comments`. No argument: ask and stop.
+2. Qualified: contract shape **and** label `{{label_prefix}}:todo` or `{{label_prefix}}:partial`
+   (a previous slice landed). Otherwise stop and say `/qualify N`.
+3. Planned and chosen: a comment with a `## Plan` heading, and a later human reply. The chosen
+   approach plus its amendments is your specification. No plan: stop and say `/plan N`. Plan
+   without reply: stop and say "waiting for `approach:` on #N". Never infer the choice from the
+   recommendation, from a reaction, or from the person asking you to build.
+4. Already in progress: label `{{label_prefix}}:in-progress`, or an open pull request that
+   references the issue (`gh pr list --repo {{repo}} --state open --search "#N"`). Say which,
+   and continue on that branch only if the person confirms; then skip Step 2.
+
+## Step 1 — Load before editing
+
+In this order, before the first edit: `{{memory.rules}}` in full; the area guide of every
+directory the approach touches; the files named in the plan; the decision the plan cites, if
+any. Start the PR body now, in a scratch file, with the line "Rules honoured: RULE-NNN, ..."
+listing the rules that apply to this slice; the rest of the body is filled at Step 5.
+
+`{{protected_paths}}` are off limits unless the chosen approach's "Touches" line says
+"protected: yes" for them. A glob covers files that do not exist yet. A slice that needs a
+protected path the plan did not name goes back to the plan: comment on the issue and stop.
+
+## Step 2 — Branch
+
+```bash
+git status --porcelain            # must print nothing (untracked files count); otherwise stop and say what is pending
+git fetch origin {{target_branch}}
+git checkout -b <type>/<issue>-<slug> origin/{{target_branch}}
+gh issue edit N --repo {{repo}} --add-label {{label_prefix}}:in-progress --remove-label {{label_prefix}}:todo --remove-label {{label_prefix}}:partial
+```
+
+`<type>`: `fix` when the issue is labelled `bug` or describes a defect, `feat` for an
+`enhancement` or new behaviour, `refactor` or `chore` when the chosen approach says so. One
+branch per slice; the slice is the first one the plan names (the issue title when the plan has a
+single unnamed slice). `--remove-label` on an absent label is harmless.
+
+## Step 3 — Build the slice
+
+- Follow the chosen approach. Where it is silent, follow the area guide; where both are silent,
+  follow the existing code around you. A deviation from the approach that you believe necessary
+  is a comment on the issue and a stop, not a silent improvement.
+- Write the test that proves each acceptance criterion first when the plan's "Proof" line says
+  "new test"; make it assert the behaviour, not the implementation (process rule PR-005).
+- Fix at the lowest layer that owns the defect (PR-003). No `skip`, `workaround` or special case in
+  a consumer to cover a producer's bug.
+- Keep the slice one slice: no drive-by refactors, no formatting of files the slice does not
+  change. Those are their own issues.
+- Documentation changes in the same PR when the slice changes behaviour the docs describe.
+- Update `{{memory.handoff}}` as part of the slice: branch, slice, what is proven, what is blocked,
+  next slice. It is committed with the slice, so the tree is clean for the next run.
+
+## Step 4 — Verify, with proof
+
+Run the environment preflight, then every gate declared for the areas the slice touches (the
+values in `aifier.yml` win over the four below when they differ), from the repository root, and
+capture the tail of each real output:
+
+```
+$ {{gates.lint}}
+$ {{gates.typecheck}}
+$ {{gates.test}}
+$ {{gates.build}}
+```
+
+A gate that cannot run is `BLOCKED: <reason>`, never skipped silently, never replaced by a weaker
+proxy. A failing gate is fixed or the PR says so; a red gate never becomes "pre-existing". When
+the plan's proof for a criterion is "manual: <steps>", run the steps and quote what you saw.
+
+## Step 5 — Open the pull request
+
+Conventional subject, `Closes #N` in the body (or `Part of #N` when slices remain), target
+`{{target_branch}}`. Fill the project's pull request template as it is; whatever its sections, the
+body carries the "Rules honoured" line, a `## Verification Run` section with the captured output
+of Step 4, and an "Out of scope" part naming the next slices and the deviations you refused to
+make. If the plan's "Decision of record" is not none, the ADR is in this PR, written with the
+`decision-record` skill.
+
+```bash
+git push -u origin HEAD
+gh pr create --base {{target_branch}} --title "<type>(<scope>): <subject>" --body-file <file>
+gh issue edit N --repo {{repo}} --add-label {{label_prefix}}:partial --remove-label {{label_prefix}}:in-progress   # only when slices remain
+```
+
+When the slice closes the issue, leave `{{label_prefix}}:in-progress`: the reviewer moves it to
+`{{label_prefix}}:done` after the merge. Never approve, merge, or mark the pull request ready on
+your own authority; never remove `{{label_prefix}}:pr:need-work`. The reviewer and the maintainer
+hold the acceptance gate.
+
+## Step 6 — Hand off
+
+If the build surfaced a lesson (a rule you had to discover, a gate that lied), say so in the
+report: it is `compound`'s input, run it when the person asks.
+
+## Report
+
+```
+## Build — #N — <date>
+Approach: <letter> (chosen by <login> on <date>)
+Branch: <name> → PR #M
+Slice: <name>, <count> of <total>
+Rules honoured: RULE-NNN, ...
+Verification Run: lint <ok|BLOCKED>, typecheck <ok|BLOCKED|none>, test <ok|BLOCKED>, build <ok|BLOCKED|none>
+Deviations refused: <list or none>
+Stopped at: acceptance gate (review and merge are human)
+```
