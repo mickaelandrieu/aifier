@@ -37,3 +37,24 @@ Rule: a change to `probes.sh` or `detect.sh` is verified on this repository and 
 Wrong: zero commits, zero PRs, every git criterion at 0 on a project that simply paused.
 Right: "window: last 90 days too sparse, falling back to last 100 commits" in the output.
 Detection: the smoke step in CI runs both collectors here; the classic witness run is in the Verification Run of the PR.
+
+## RULE-006: blind-run-before-release
+Severity: critical · Learned from: first end-to-end test on the classic witness · Date: 2026-10-07
+Rule: a skill ships only after an agent with no other context has run it from its SKILL.md alone and reported every sentence it had to guess at; those guesses become fixes or rules.
+Wrong: the author runs the skill with the conversation in mind and finds it clear.
+Right: two blind runs found 28 frictions in `assess` and `init` that the author had not seen.
+Detection: the pull request's Verification Run quotes the blind agent's friction list, or says "none".
+
+## RULE-007: placeholder-contract-is-explicit
+Severity: major · Learned from: blind `init` run · Date: 2026-10-07
+Rule: every placeholder has one source key in `aifier.yml`, one documented shape (colon, trailing slash, null handling, scalar versus per-area), and `scripts/check.sh` knows the full list.
+Wrong: `{{label_prefix}}:done` with a prefix that already ends in a colon; `{{memory.decisions}}/x` with a value ending in a slash; `{{name}}` with no source.
+Right: prefix without colon and skills add it; paths without trailing slash; area table keyed on `stack` and `dir`.
+Detection: `scripts/check.sh` fails on an unknown placeholder; a blind run reports any doubled separator.
+
+## RULE-008: probe-lines-say-what-they-prove
+Severity: major · Learned from: blind `assess` run · Date: 2026-10-07
+Rule: a collector line that comes from a keyword scan says so, so it is never cited as proof of an executed step.
+Wrong: "CI pipelines: ruff, mypy, bandit" from a comment in the workflow, read as three CI steps.
+Right: "CI keyword hits (not steps): ruff, mypy, bandit; steps: pytest".
+Detection: review of `probes.sh` output headings; a blind run flags any line it had to re-verify.

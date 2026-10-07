@@ -8,7 +8,7 @@ branches:
   default: main
   target: main
 labels:
-  prefix: "sdlc:"
+  prefix: "sdlc"
   states: [todo, in-progress, done, partial, needs-input]
   pr_states: [ok, need-work, rejected]
 areas:
@@ -25,6 +25,6 @@ ci:
 guards: []
 memory:
   rules: docs/learned-rules.md
-  decisions: docs/decisions/
+  decisions: docs/decisions
   handoff: docs/handoff.md
 protected_paths: [templates/, skills/*/SKILL.md]

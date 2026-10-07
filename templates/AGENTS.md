@@ -6,7 +6,7 @@ This file is a map; the rules of each area live in its guide.
 
 | Area | Directory | Read first |
 |---|---|---|
-{{#areas}}| {{name}} | `{{dir}}/` | [{{dir}}/AGENTS.md]({{dir}}/AGENTS.md) |
+{{#areas}}| {{stack}} | `{{dir}}/` | [{{dir}}/AGENTS.md]({{dir}}/AGENTS.md) |
 {{/areas}}
 
 Memory: [learned rules]({{memory.rules}}) (read before building or reviewing),
@@ -36,6 +36,8 @@ start, update before stopping). Configuration of the cycle: [aifier.yml](aifier.
 {{/protected_paths}}
 
 ## Gates
+
+Lines whose gate is `null` in `aifier.yml` are omitted; say which family is missing.
 
 {{#areas}}From `{{dir}}/`:
 

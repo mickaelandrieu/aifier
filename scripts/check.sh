@@ -14,7 +14,7 @@ for f in skills/*/SKILL.md; do
   keys="$(awk '/^---$/{c++; next} c==1 {print $1}' "$f" | tr -d ':' | sort | tr '\n' ' ')"
   [ "$keys" = "description name " ] || { echo "$f: frontmatter must be exactly name and description, got: $keys"; fail=1; }
 done
-allowed='project|project_summary|default_branch|target_branch|label_prefix|language|repo|forge|engines|stack|dir|name|path|date|guards|required_checks|ci_file|area\.(name|dir|summary|layout|commands|patterns)|gates\.(lint|typecheck|test|build)|memory\.(rules|decisions|handoff)'
+allowed='protected_paths|project|project_summary|default_branch|target_branch|label_prefix|language|repo|forge|engines|stack|dir|name|path|date|guards|required_checks|ci_file|area\.(name|dir|summary|layout|commands|patterns)|gates\.(lint|typecheck|test|build)|memory\.(rules|decisions|handoff)'
 bad="$(grep -rhoE '\{\{[a-z_.]+\}\}' skills templates | sort -u | grep -vE "^\{\{($allowed)\}\}$" || true)"
 [ -n "$bad" ] && { echo "unknown placeholders: $bad"; fail=1; }
 [ "$fail" = 0 ] && echo "aifier check: OK"

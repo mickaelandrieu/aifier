@@ -23,8 +23,10 @@ DEFAULT=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/
 ```
 
 Record the sources: `git` (always) and `forge` (when `gh` or `glab` answers). Without the forge,
-every criterion that needs branch protection, issue or PR samples, reviews or check runs is
-**unrated**, never 0. Note today's date: a proof older than 90 days caps its criterion at 2.
+a criterion whose levels 0 to 2 are visible in the repository (a template, a written rule) is
+rated from the repository and capped at 2; a criterion whose every level needs the forge (branch
+protection, reviews, samples of issues) is **unrated**, never 0. Without a PR sample, the merge
+commits on the default branch stand in for it: say "proxy sample" in the report. Note today's date: a proof older than 90 days caps its criterion at 2.
 
 If your shell aborts a command on an unmatched glob (zsh does), run `setopt +o nomatch` first, or
 `shopt -s nullglob` in bash. If a command-rewriting proxy sits in front of your shell and an `ls`

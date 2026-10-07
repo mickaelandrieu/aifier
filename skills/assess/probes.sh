@@ -81,7 +81,7 @@ section "CI pipelines"
 ci=$(ls .github/workflows/*.y*ml .gitlab-ci.yml cloudbuild*.y*ml .circleci/config.yml Jenkinsfile bitbucket-pipelines.yml 2>/dev/null)
 [ -z "$ci" ] && line "none found"
 for f in $ci; do
-  line "$f:"
+  line "$f (keyword hits, not steps; read the file before citing):"
   for k in ruff flake8 eslint biome prettier mypy pyright tsc pytest vitest jest playwright cypress coverage codecov trivy gitleaks trufflehog semgrep bandit snyk dependabot build docker deploy; do
     grep -qiE "\b$k\b" "$f" && printf '  - %s\n' "$k"
   done

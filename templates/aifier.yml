@@ -16,16 +16,17 @@ areas:
 {{/areas}}
 gates:
 {{#areas}}  {{dir}}:
-    lint: "{{gates.lint}}"
-    typecheck: "{{gates.typecheck}}"
-    test: "{{gates.test}}"
-    build: "{{gates.build}}"
+    lint: {{gates.lint}}
+    typecheck: {{gates.typecheck}}
+    test: {{gates.test}}
+    build: {{gates.build}}
 {{/areas}}
 ci:
   file: {{ci_file}}
   required_checks: [{{required_checks}}]
 guards: [{{guards}}]
+protected_paths: [{{protected_paths}}]
 memory:
   rules: docs/learned-rules.md
-  decisions: docs/decisions/
+  decisions: docs/decisions
   handoff: docs/handoff.md

@@ -16,5 +16,5 @@ Blocks between `{{#list}}` and `{{/list}}` repeat per item.
 | `memory/handoff.md` | `docs/handoff.md` | session handoff |
 
 An existing `AGENTS.md` or `CLAUDE.md` is never overwritten: `init` shows the difference and
-offers merge, side file or skip. Redistributing a long existing context file into area guides is
-the job of `/context`, not of the renderer.
+offers merge, side file or skip. On merge, `init` redistributes the existing content between the
+constitution and the area guides; `/context` later audits what is stale or duplicated.
