@@ -15,14 +15,14 @@ update before stopping). Configuration of the cycle: [aifier.yml](aifier.yml).
 ## Rules that apply everywhere
 
 1. Everything published here must be reusable by anyone: no reference to any private project,
-   client or internal framework, only sources freely available on the internet. The check script
-   fails on such references.
+   client or internal framework, only sources freely available on the internet; the method's
+   concept pages are public and may be linked.
 2. A skill's frontmatter carries only `name` and `description`: it is the one format every
-   engine loads. Placeholders come from the list in `scripts/check.sh`.
-3. Scripts are POSIX `sh` for the installer and `bash` for collectors, syntax-checked by the
-   gate, and written so that a partial download never executes.
+   engine loads. Placeholders come from the list in `templates/README.md`.
+3. Scripts are POSIX `sh` for the installer and `bash` for collectors, and written so that a
+   partial download never executes.
 4. No claim without proof. Every deliverable ends with a `## Verification Run` section quoting
-   `bash scripts/check.sh` and the smoke commands with their captured output, or `BLOCKED`.
+   the gates of `aifier.yml` and the smoke commands with their captured output, or `BLOCKED`.
 5. Method pages are in French, skills, templates and scripts in English.
 6. Branch from `main`, one slice per pull request, conventional commit subjects, the pull
    request references its issue.
@@ -37,7 +37,7 @@ update before stopping). Configuration of the cycle: [aifier.yml](aifier.yml).
 ## Gates
 
 ```bash
-bash scripts/check.sh
+cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test && cargo build --release
 AIFIER_SRC=. AIFIER_DIR=skills sh install.sh
 bash skills/init/detect.sh . >/dev/null && bash skills/assess/probes.sh . >/dev/null
 bash tests/run.sh

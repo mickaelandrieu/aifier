@@ -8,14 +8,14 @@ Severity: critical · Learned from: cleanup of 2026-10-07 · Date: 2026-10-07
 Rule: nothing in this repository names a private project, client or internal framework; examples use neutral placeholders.
 Wrong: a calibration section naming the production codebase the method was distilled from.
 Right: "advanced witness project" with the profile that matters, and the results kept outside the repository.
-Detection: `scripts/check.sh` greps the tree; add new forbidden names there when they appear.
+Detection: review question on every pull request: does the diff name a private project, client or framework?
 
 ## RULE-002: skill-frontmatter-minimal
 Severity: major · Learned from: portability review of 2026-10-07 · Date: 2026-10-07
 Rule: a `SKILL.md` frontmatter has exactly `name` and `description`; engine-specific keys (`skills:` preload, `argument-hint`, `disable-model-invocation`) go in the body as instructions.
 Wrong: `skills: [verification-evidence]` in the frontmatter, loaded by one engine and ignored by two.
 Right: "Load the `verification-evidence` skill before the first command" in the body.
-Detection: `scripts/check.sh` lists the keys of every frontmatter.
+Detection: `awk '/^---$/{c++; next} c==1 {print FILENAME": "$1}' skills/*/SKILL.md` shows only `name:` and `description:`.
 
 ## RULE-003: installer-runs-from-a-function
 Severity: major · Learned from: first public `curl | sh` of 2026-10-07 · Date: 2026-10-07
@@ -47,10 +47,10 @@ Detection: the pull request's Verification Run quotes the blind agent's friction
 
 ## RULE-007: placeholder-contract-is-explicit
 Severity: major · Learned from: blind `init` run · Date: 2026-10-07
-Rule: every placeholder has one source key in `aifier.yml`, one documented shape (colon, trailing slash, null handling, scalar versus per-area), and `scripts/check.sh` knows the full list.
+Rule: every placeholder has one source key in `aifier.yml`, one documented shape (colon, trailing slash, null handling, scalar versus per-area), and `templates/README.md` lists them all.
 Wrong: `{{label_prefix}}:done` with a prefix that already ends in a colon; `{{memory.decisions}}/x` with a value ending in a slash; `{{name}}` with no source.
 Right: prefix without colon and skills add it; paths without trailing slash; area table keyed on `stack` and `dir`.
-Detection: `scripts/check.sh` fails on an unknown placeholder; a blind run reports any doubled separator.
+Detection: `grep -rhoE '\{\{[a-z_.]+\}\}' skills templates | sort -u` against the list in `templates/README.md`; a blind run reports any doubled separator.
 
 ## RULE-008: probe-lines-say-what-they-prove
 Severity: major · Learned from: blind `assess` run · Date: 2026-10-07

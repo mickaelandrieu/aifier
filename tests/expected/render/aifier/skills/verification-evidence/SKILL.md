@@ -50,7 +50,7 @@ Example:
 
 ```
 ## Verification Run
-$ bash scripts/check.sh        → All checks passed
+$ cargo fmt --check && cargo clippy --all-targets -- -D warnings        → All checks passed
 $ AIFIER_SRC=. AIFIER_DIR=skills sh install.sh && bash skills/init/detect.sh . >/dev/null && bash skills/assess/probes.sh . >/dev/null && bash tests/run.sh tests/unit/orders -q   → 48 passed in 2.3s
 Integration tests: BLOCKED — database unreachable (DB_HOST unset). Must run in CI before merge.
 ```

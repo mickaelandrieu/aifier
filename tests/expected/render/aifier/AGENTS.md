@@ -41,7 +41,7 @@ Lines whose gate is `null` in `aifier.yml` are omitted; say which family is miss
 From `/`:
 
 ```bash
-bash scripts/check.sh
+cargo fmt --check && cargo clippy --all-targets -- -D warnings
 AIFIER_SRC=. AIFIER_DIR=skills sh install.sh && bash skills/init/detect.sh . >/dev/null && bash skills/assess/probes.sh . >/dev/null && bash tests/run.sh
 ```
 
