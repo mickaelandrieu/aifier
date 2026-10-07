@@ -12,11 +12,13 @@ The `assess` skill is the exception: it runs from this repository against any ta
 |---|---|
 | `assess` | Read-only maturity audit of any repository against the eleven phases; runs from this repo, not rendered. |
 | `context` | audits what agents read: stale claims, dead paths, duplication, load per session, tiering and the split proposal for a long context file |
+| `gates` | declares the lint, typecheck, test and build commands per area, the preflight, compares with CI, runs them with captured output (`run.py`) |
 | `init` | Brings a repository to the Setup phase: detects the stack, confirms `aifier.yml`, renders constitution, templates, memory and the skills below. |
 | `verification-evidence` | The proof discipline: no gate claimed without captured output, environment preflight, `## Verification Run` section, `BLOCKED` verdict, no ready label on self-report. |
 | `review-checklist` | Structured review (architecture, correctness, security, behaviour tests, consistency) with the PR health gate, a drift level and the learned-rule question. |
 | `adversarial-test-plan` | Adversarial QA: attack categories, numbered plan, strict verdicts and severities, PLAN versus EXECUTE modes. |
 | `decision-record` | When to write an ADR, `NNNN-slug.md` naming under the decisions directory, the template, supersession. |
 | `compound` | Captures a lesson as a learned rule, pre-release (Compound-1) or from an incident (Compound-2), with admission criterion and de-duplication. |
+| `status` | one-screen position against the method from the last assess, the memory files and the manifest (`status.sh`, `--min` for CI) |
 | `process-rules` | Starter catalogue of process rules PR-001 to PR-010: branching, PR base, lowest layer, health gate, proof, git hygiene, grounded claims, preflight. |
 | `documentation-rules` | Diátaxis decision guide and checklists, docs in the same PR as the code, every claim verified against source, no dead path. |

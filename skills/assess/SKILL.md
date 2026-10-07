@@ -258,7 +258,9 @@ agent; coverage configured but never run. Risks go in their own section, before 
 
 Write the report in the language of the repository's README (default English). Samples may be in
 another language: make your regexes cover both. Write to standard output and, if the caller gave an
-output path, to that file **outside** the audited repository. Format:
+output path, to that file **outside** the audited repository; also write a copy to
+`.aifier/assess-<date>.md` inside the repository so that `status` can read it (it is the one
+file `assess` writes there; the person decides whether to commit it). Format:
 
 ```
 # assess · <repo> · <date>

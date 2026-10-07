@@ -21,6 +21,7 @@ gates:
     test: {{gates.test}}
     build: {{gates.build}}
 {{/areas}}
+preflight: []
 ci:
   file: {{ci_file}}
   required_checks: [{{required_checks}}]
