@@ -1,0 +1,21 @@
+{
+  "issue": {
+    "number": 7,
+    "body": "## Problem\n\nThe export button does nothing when the list is empty.\n\n## Impact\n\nSupport receives one ticket a week; unknown cost.\n\n## Acceptance criteria\n\n- [ ] When the list is empty and the export button is pressed, then a message says there is nothing to export.\n\n<details><summary>Technical analysis</summary>\n\nAffected areas: `web` (guide: `web/AGENTS.md`)\nSuspected cause: `web/src/export.ts:12`\nConstraints: RULE-001\nNon-binding approach: left to plan\nOpen questions: none\n\n</details>",
+    "labels": [
+      {
+        "name": "sdlc:needs-input"
+      }
+    ],
+    "comments": [
+      {
+        "author": {
+          "login": "fixture-author"
+        },
+        "body": "Qualified with open questions; labelled `sdlc:needs-input` until they are answered.\n\n1. Which lists are concerned?",
+        "createdAt": "2026-09-10T10:00:00Z"
+      }
+    ]
+  },
+  "prs": []
+}
