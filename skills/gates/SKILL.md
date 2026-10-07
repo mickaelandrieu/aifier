@@ -37,7 +37,7 @@ Show the table and ask the person to confirm or correct each command, and to ans
 ## Step 3 — Compare with CI
 
 ```bash
-python3 -I "<directory of this SKILL.md>/run.py" aifier.yml --compare-ci --area none
+bash "<directory of this SKILL.md>/run.sh" aifier.yml --compare-ci --area none
 ```
 
 Every declared gate that CI does not run is a finding; every CI step that is not a declared
@@ -47,7 +47,7 @@ require in branch protection), do not apply it without a yes.
 ## Step 4 — Run once, capture
 
 ```bash
-python3 -I "<directory of this SKILL.md>/run.py" aifier.yml --preflight
+bash "<directory of this SKILL.md>/run.sh" aifier.yml --preflight
 ```
 
 The runner executes the preflight, stops with `BLOCKED` when it fails, then every declared
@@ -55,8 +55,8 @@ gate in its area, and prints a `## Verification Run` block with the exit code an
 of each. Paste that block in your report, verbatim. A gate that fails is a result, not a reason
 to edit `aifier.yml`: say what failed and leave it to the person.
 
-Without `python3`, run each command yourself in its area directory, redirect the output to a
-file under `.aifier/gates/`, and write the same block by hand.
+The runner needs `bash` and the usual Unix tools; when `run.sh` cannot start, say
+`BLOCKED: run.sh could not run (<reason>)`, do not write the block by hand.
 
 ## Step 5 — Make it stick
 
