@@ -68,6 +68,24 @@ file whose template you did not read.
 Write `.aifier/manifest.yml`: the aifier ref, the date, every file rendered, every file skipped
 and why, and what this version could not render (`guards: not available`, `labels: not created`).
 
+Print the forge commands `init` does not run, filled from `aifier.yml`, for the person to copy:
+
+```bash
+# workflow labels (idempotent)
+for l in todo in-progress done partial needs-input; do gh label create "{{label_prefix}}$l" --repo {{repo}} --color 0E8A16 --force; done
+for l in ok need-work rejected; do gh label create "{{label_prefix}}pr:$l" --repo {{repo}} --color 1D76DB --force; done
+# branch protection: one review, the required checks, no force push, admins included
+gh api -X PUT "repos/{{repo}}/branches/{{target_branch}}/protection" --input - <<'JSON'
+{"required_status_checks":{"strict":true,"contexts":[{{required_checks}}]},
+ "enforce_admins":true,
+ "required_pull_request_reviews":{"required_approving_review_count":1,"dismiss_stale_reviews":true},
+ "restrictions":null,"allow_force_pushes":false,"allow_deletions":false}
+JSON
+```
+
+For GitLab print the `glab label create` and `glab api` equivalents. Say that protection on a
+branch people push to directly will reject those pushes from then on: it is the gate, not a bug.
+
 Report in ten lines: the files rendered, the questions answered, the gaps `init` closed
 (constitution, area guides, templates, memory, skills) and the ones it cannot close (branch
 protection, CI gates, labels on the forge), each with the command or human action that closes it.
