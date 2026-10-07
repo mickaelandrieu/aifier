@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# aifier gates: syntax of every shell script, neutrality of the content, frontmatter and
-# placeholders of every skill. Exit 1 on the first failure.
+# aifier lint gate, run by CI and by every Verification Run: syntax of every shell script, no
+# reference to the private origin of the method, frontmatter and placeholders of every skill, no
+# paraphrase of the gate logic outside gate.sh, no Python under skills/. Exit 1 on any failure.
 set -u
 cd "$(git rev-parse --show-toplevel)" || exit 1
 fail=0
@@ -8,7 +9,10 @@ for f in install.sh scripts/*.sh skills/*/*.sh tests/*.sh tests/fixtures/*.sh; d
   case "$f" in *.sh) ;; *) continue;; esac
   if head -1 "$f" | grep -q bash; then bash -n "$f" || fail=1; else sh -n "$f" || fail=1; fi
 done
-hits="$(grep -rniE 'raise|sfeir' --exclude-dir=.git --exclude-dir=.claude --exclude-dir=target . | grep -v 'sfeir.com/concepts' || true)"
+# neutrality: no name of the private project or company the method was distilled from, anywhere,
+# this file included (the words are assembled so that the check does not match itself)
+origin="$(printf '%s|%s' 'ra''ise' 'sf''eir')"
+hits="$(grep -rniE "$origin" --exclude-dir=.git --exclude-dir=.claude --exclude-dir=target . || true)"
 [ -n "$hits" ] && { echo "origin references found:"; echo "$hits"; fail=1; }
 for f in skills/*/SKILL.md; do
   keys="$(awk '/^---$/{c++; next} c==1 {print $1}' "$f" | tr -d ':' | sort | tr '\n' ' ')"
