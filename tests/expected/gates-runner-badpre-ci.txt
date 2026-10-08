@@ -1,0 +1,9 @@
+## Verification Run
+
+Date: DATE · Config: aifier-badpre.yml
+
+CI comparison (no CI file declared):
+- api/lint: no token hit: `echo`
+
+Verdict: no gate run
+exit: 0

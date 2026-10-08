@@ -1,1 +1,1 @@
-state: in-progress (shape: ok, labels: sdlc:in-progress, plan comment: comment 2 of 3, approach reply: A by fixture-maintainer on 2026-09-12, open PR: #42)
+state: in-progress (shape: ok, labels: sdlc:in-progress, contract reply: none, plan comment: comment 2 of 3, approach reply: A by fixture-maintainer on 2026-09-12, open PR: #42)

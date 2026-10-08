@@ -23,13 +23,20 @@ the states.
    fallback. Quote the printed `state:` line in the report.
 2. Act on the printed state. `not-qualified` with `shape: missing`: continue, this is the issue to
    qualify. `not-qualified` with `shape: ok`: do not rewrite; set the label (Step 2) and say the
-   body was already in shape. `qualified`, `qualified (partial)`, `needs-input`, `planned`,
+   body was already in shape. `proposed`: say "contract posted, waiting for `contract: ok` from
+   the author" and stop. `qualified`, `qualified (partial)`, `needs-input`, `planned`,
    `chosen <letter>`: say "already qualified" with the state and stop. `in-progress`: name every
    label and pull request the line carries and stop; qualification happens before work, not
-   during it.
-3. Fetch the issue: `gh issue view N --repo {{repo}} --json title,body,labels,comments,author`
+   during it. `done`: say "issue closed by the cycle" and stop.
+3. Check once that the workflow labels exist: `gh label list --repo {{repo}} --search
+   "{{label_prefix}}:" --limit 100 --json name -q '.[].name'`. When any of
+   `{{label_prefix}}:todo`, `{{label_prefix}}:in-progress`, `{{label_prefix}}:done`,
+   `{{label_prefix}}:partial`, `{{label_prefix}}:needs-input` is missing, print
+   `BLOCKED: workflow labels missing` followed by one line per missing label,
+   `gh label create "{{label_prefix}}:<state>" --repo {{repo}}`, and stop.
+4. Fetch the issue: `gh issue view N --repo {{repo}} --json title,body,labels,comments,author`
    (GitLab: `glab issue view N`).
-4. Read what grounds the technical part: the constitution, the area guide of each directory the
+5. Read what grounds the technical part: the constitution, the area guide of each directory the
    issue mentions, the catalogue, the titles of the files in `{{memory.decisions}}`, and the files
    the issue names. Cite nothing you did not open.
 
@@ -88,7 +95,8 @@ not carry is harmless.
 
 - Contract complete: `gh issue edit N --repo {{repo}} --body-file <file> --add-label
   {{label_prefix}}:todo --remove-label {{label_prefix}}:needs-input`, then one comment:
-  "Qualified. Please confirm the problem and the acceptance criteria reflect the need, or edit them.
+  "Qualified. Please confirm the problem and the acceptance criteria reflect the need, or edit
+  them, then reply `contract: ok` (the gate reads that reply as the intent gate crossed).
   Next step after your confirmation: `/plan N`."
 - Open questions remain: same edit, but the label is `{{label_prefix}}:needs-input` and the comment
   lists the questions. The issue is not qualified until the author answers.
@@ -105,7 +113,7 @@ Gate: <the printed state: line, verbatim>
 State: todo | needs-input | already qualified | stopped
 Criteria: <count> observable, <count> open questions
 Grounding: <files opened>; claims VERIFIED <count>, INFERRED <count>
-Stopped at: intent gate (human confirms the contract) | Step 0 (<state>, nothing written) | BLOCKED (<reason>)
+Stopped at: intent gate (human replies `contract: ok`) | Step 0 (<state>, nothing written) | BLOCKED (<reason>)
 ```
 
 On a stop at Step 0 or on `BLOCKED`, fill `Gate`, `State: stopped` and `Stopped at`; leave the

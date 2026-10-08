@@ -26,9 +26,17 @@ documents the states.
    Quote the printed `state:` line in the report.
 2. Act on the printed state. `chosen <letter>`: continue, that approach plus the amendments of its
    reply is your specification. `not-qualified` or `needs-input`: stop and say `/qualify N`.
-   `qualified` or `qualified (partial)`: stop and say `/plan N`. `planned`: stop and say "waiting
-   for `approach:` on #N". Never infer the choice from the recommendation, from a reaction, or
-   from the person asking you to build: the letter comes from the printed line or there is none.
+   `proposed`: stop and say "waiting for `contract: ok` on #N". `qualified` or `qualified
+   (partial)`: stop and say `/plan N`. `planned`: stop and say "waiting for `approach:` on #N".
+   `done`: stop and say "issue closed by the cycle". Never infer the choice from the
+   recommendation, from a reaction, or from the person asking you to build: the letter comes
+   from the printed line or there is none.
+   Then check once that the workflow labels exist: `gh label list --repo acme/docs-only --search
+   "sdlc:" --limit 100 --json name -q '.[].name'`. When any of
+   `sdlc:todo`, `sdlc:in-progress`, `sdlc:done`,
+   `sdlc:partial`, `sdlc:needs-input` is missing, print
+   `BLOCKED: workflow labels missing` followed by one line per missing label,
+   `gh label create "sdlc:<state>" --repo acme/docs-only`, and stop.
 3. `in-progress`: name every label and pull request the line carries, then fetch the issue
    (item 4) and ask the person once: "continue on the branch of PR #M?" naming the pull request
    whose base matches this slice (the approach reply may name the branch instead). Without a

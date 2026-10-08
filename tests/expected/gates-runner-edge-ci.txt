@@ -1,0 +1,13 @@
+## Verification Run
+
+Date: DATE · Config: aifier-edge.yml
+
+warning: area api declared twice, keeping the last block
+
+CI comparison (.github/workflows/ci.yml, .github/workflows/missing.yml):
+- CI file not found: .github/workflows/missing.yml
+- api/lint: token hit (not a step): `echo`
+- ghost/lint: token hit (not a step): `echo`
+
+Verdict: no gate run
+exit: 0

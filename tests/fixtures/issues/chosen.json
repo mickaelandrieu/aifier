@@ -50,7 +50,13 @@
       "body": "Unrelated change. Closes #70.",
       "closingIssuesReferences": [
         {
-          "number": 70
+          "number": 70,
+          "repository": {
+            "name": "export",
+            "owner": {
+              "login": "acme"
+            }
+          }
         }
       ]
     }

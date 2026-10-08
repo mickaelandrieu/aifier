@@ -5,9 +5,10 @@
 ## Identity
 
 - remote: https://example.com/acme/docs-only.git
-- default branch: 
+- default branch: unknown (no origin/HEAD)
 - commits total: 3
 - last commit: 2026-09-18
+- shallow clone: no
 - tracked files: 3
 - languages (by extension, top 8):
   - md: 3
@@ -35,8 +36,8 @@
 - CONTRIBUTING: absent
 - session load (constitution + @includes): 0 lines
 - paths cited in constitution/docs: 0, dead: 0
-- constitution last change: ; docs last change: 2026-09-18; code last change: 2026-09-18
-- docs commits in last 2026-08-01: 2 / all commits: 3
+- constitution last change: n/a; docs last change: 2026-09-18; code last change: 2026-09-18
+- docs commits since 2026-08-01: 2 / all commits: 3
 
 ## H. Harnessability
 
@@ -70,15 +71,15 @@
 - feature flags lib: 
 - structured logging / tracing: 
 
-## Secrets (candidates, read before citing)
+## Secrets (narrow regex scan, candidates: read before citing)
 
 - gitleaks: 
-- tracked files with secret-looking assignments (max 15):
+- secret-looking assignments in tracked files (regex: key, then : or =, then 8+ value characters; max 15):
 - tracked .env files: 
 
 ## Git activity
 
-- window: last 2026-08-01 too sparse, falling back to last 100 commits (ending 2026-09-18)
+- window: since 2026-08-01 too sparse (3 in window, fewer than 5), sample is the last 100 commits: 3 in sample (ending 2026-09-18)
 - non-merge commits: 3; merge commits: 0
 - conventional commit subjects: 3 / 3
 - commits referencing an issue (#N): 0 / 3

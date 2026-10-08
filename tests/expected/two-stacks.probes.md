@@ -5,9 +5,10 @@
 ## Identity
 
 - remote: https://example.com/acme/two-stacks.git
-- default branch: 
+- default branch: unknown (no origin/HEAD)
 - commits total: 12
 - last commit: 2026-09-26
+- shallow clone: no
 - tracked files: 28
 - languages (by extension, top 8):
   - py: 7
@@ -42,7 +43,7 @@
 - session load (constitution + @includes): 20 lines
 - paths cited in constitution/docs: 0, dead: 0
 - constitution last change: 2026-09-01; docs last change: 2026-09-15; code last change: 2026-09-26
-- docs commits in last 2026-08-01: 2 / all commits: 12
+- docs commits since 2026-08-01: 2 / all commits: 12
 
 ## H. Harnessability
 
@@ -80,15 +81,15 @@
 - feature flags lib: 
 - structured logging / tracing: 
 
-## Secrets (candidates, read before citing)
+## Secrets (narrow regex scan, candidates: read before citing)
 
 - gitleaks: 
-- tracked files with secret-looking assignments (max 15):
+- secret-looking assignments in tracked files (regex: key, then : or =, then 8+ value characters; max 15):
 - tracked .env files: 
 
 ## Git activity
 
-- window: last 2026-08-01 too sparse, falling back to last 100 commits (ending 2026-09-26)
+- window: since 2026-08-01: 12 in window, 12 in sample
 - non-merge commits: 12; merge commits: 0
 - conventional commit subjects: 12 / 12
 - commits referencing an issue (#N): 1 / 12

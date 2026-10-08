@@ -1,0 +1,4 @@
+--family must be one of lint|typecheck|test|build, got 'bogus'
+exit: 2
+no gate matched --area nope
+exit: 2
