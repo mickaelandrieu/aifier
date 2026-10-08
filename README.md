@@ -2,273 +2,105 @@
 
 **Make your existing codebase a place where AI agents can work safely.**
 
-aifier audits a repository, tells you exactly what is missing for coding agents to operate under
-human control, then installs it: a constitution for agents, verification gates with proof, an
-issue-based workflow with human gates, and a catalogue of learned rules that grows with every cycle.
-
-It is a method first and a toolkit second. Everything it installs is plain Markdown and YAML,
-versioned in your repo, and portable across Claude Code, opencode and pi.
+Coding agents write good code and have no idea where they are. aifier gives them the harness:
+a constitution for the repository, gates that produce proof, a workflow that stops at the three
+decisions humans must keep, and a catalogue of rules that learns from every review. All of it is
+Markdown and YAML in your repository, loaded by Claude Code, opencode and pi.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Status: alpha](https://img.shields.io/badge/status-alpha-orange.svg)](#status)
 
----
-
-## Who it is for
-
-- **Tech leads and architects** who want to let agents touch a real, aging codebase without
-  giving up control of intent, architecture and release.
-- **Teams already using Claude Code, Cursor, opencode or Copilot** who feel the agent "doesn't know
-  the project": wrong conventions, repeated mistakes, confident claims that nothing proves.
-- **Platform and DevEx engineers** asked to "roll out AI" across many repositories with one
-  consistent, auditable setup.
-- **Consultants and coaches** who need a repeatable way to assess a client's readiness and bring
-  a project to a known state.
-
-If you have one agent working on a weekend side project, you do not need aifier. If you have a
-team, a backlog, a CI and something in production, you do.
-
-## The problem it solves
-
-Agents are good at writing code and bad at knowing where they are. Dropped into an existing
-repository they:
-
-- ignore conventions nobody wrote down, and reinvent what already exists;
-- make the same mistake in every session, because nothing remembers the last review;
-- say "tests pass" without the output to prove it;
-- decide intent, architecture and merge on their own, because nothing told them to stop.
-
-The usual answer is a longer prompt. It does not scale. What scales is a **harness**: written
-context at the right altitude, mechanical gates that produce evidence, a workflow that stops at the
-decisions humans must own, and a loop that turns every lesson into a rule.
-
-## What you get
-
-aifier brings a repository to the **Setup** phase of the
-[AI-augmented SDLC](https://www.sfeir.com/concepts/sdlc-augmente/): eleven phases, three human
-gates (intent, architecture, acceptance), two capitalisation points (before release, from
-production).
-
-aifier is installed once into your repository and then runs **inside your coding agent**: the
-skills are plain `SKILL.md` files that Claude Code, opencode and pi all load. See
-[Install aifier into your project](#install-aifier-into-your-project).
-
-## Install aifier into your project
-
-**What you need.** A git repository, a POSIX shell with `git`, `curl` and `tar` (macOS, Linux,
-WSL, Git Bash), and a coding agent that loads skills (Claude Code, opencode or pi). `gh` and `jq`
-let `assess` and `gate` read the forge; without them those parts say so and go on. Nothing else:
-no Python, no Node, no Rust on the machine that uses aifier.
-
-**1. Install the skills.** From the root of your repository:
+## Quick start
 
 ```sh
+# from the root of your git repository
 curl -fsSL https://raw.githubusercontent.com/mickaelandrieu/aifier/main/install.sh | sh
 ```
 
-The installer copies the skills into `.agents/skills/` (and links `.claude/skills` to it for
-Claude Code), puts the `aifier` binary that `init` renders with under `.aifier/bin/` after
-checking its sha256 against the release, writes `.aifier/install.yml`, and stops. Options, as
-environment variables: `AIFIER_DIR` to choose the skills directory, `AIFIER_REF` to pin a tag
-(`v1.2.3`, which is also what selects the binary: a branch carries none), and
-`AIFIER_SRC=/path/to/a/clone` to install from a local checkout, which is the way while the
-repository is private (the binary is then copied from that clone's `target/release/`, built with
-`cargo build --release`). Run it again any time to update: it replaces the skills and the binary
-and nothing else. Linux x86_64 and arm64 (WSL included) and macOS Intel and Apple silicon have a
-binary; elsewhere the installer says so and `init` asks for a build from source.
+Then, in your coding agent:
 
-**2. Measure.** In your agent, run `/assess`. It is read-only: a score per phase, a verdict, the
-gaps in priority order with the action that closes each.
+1. `/assess` measures where the repository stands. It changes nothing.
+2. `/init` sets it up: it detects your stack, asks what it cannot guess, and renders the files.
+3. `/gates` declares lint, typecheck, tests and build, so every agent proves its work.
+4. For each issue: `/qualify`, `/plan`, `/build`. See [the cycle](#the-cycle).
 
-**3. Set up.** Run `/init`. It detects the stack and the areas, shows the `aifier.yml` it inferred,
-asks what it could not infer (engine, branches, label prefix, language), then renders the
-constitution, the area guides, the issue and pull request templates, the memory files and the
-knowledge skills. An existing file is never overwritten silently: you choose merge, side file or
-skip for each. It prints the forge commands (labels, branch protection) and runs them only on your
-yes. Review the diff and commit it on a branch, like any change.
+Needs macOS, Linux, WSL or Git Bash with `git`, `curl` and `tar`; `gh` and `jq` to read your
+forge. No Python, Node or Rust.
 
-**4. Declare the gates.** Run `/gates`. It finds lint, typecheck, test and build per area, compares
-them with CI, writes them into `aifier.yml`, and installs the runner every agent uses from then on
-to end its work with a captured `## Verification Run`.
+<details><summary>Installer options</summary>
 
-**5. Work.** Open an issue and run `/qualify`, `/plan`, `/build`: see
-[Using it day to day](#using-it-day-to-day). `/status` shows where the project stands; `/compound`
-turns a lesson into a rule.
+The installer puts the skills in `.agents/skills/` and the `aifier` binary in `.aifier/bin/`,
+nothing else. `AIFIER_REF=v1.2.3` pins a release (a branch carries no binary), `AIFIER_DIR`
+changes the skills directory, `AIFIER_SRC=/path/to/clone` installs from a local checkout. Run it
+again to update. Delete the two directories to remove.
 
-**Remove.** Delete `.agents/skills/` (or your `AIFIER_DIR`), `.claude/skills` if it is a link,
-and `.aifier/`. The files `init` rendered are yours: keep them or not. The V2 binary brings
-`aifier update` and `aifier remove`, see [ADR 0002](docs/decisions/0002-aifier-binary.md).
+</details>
 
-What `init` renders into your project:
+## The skills
 
-| Rendered | Role |
-|---|---|
-| `AGENTS.md` | the constitution: a short map, rules that apply everywhere, pointers to area guides |
-| `aifier.yml` | repo, branches, label prefix, gates, language, chosen guards |
-| Skills | run by your engine as slash commands: the cycle (`/qualify`, `/plan`, `/build`, each stopping at its gate), the transverse ones (`/assess`, `/gates`, `/context`, `/compound`, `/status`), plus knowledge skills (proof discipline, review checklist, adversarial test plan, ADR and documentation rules) |
-| Guards | not yet: standalone hooks per engine (protected paths, forbidden git operations, secrets, a required verification section before the agent stops) come with a later release; today the constitution and the skills state the rules and the reviewer checks them |
-| Memory | the learned-rules catalogue, the decision journal (ADRs) and the session handoff file, all plain Markdown in git |
-| Workflow | two-audience issue templates, a PR template with a validation section, workflow labels |
-
-The skills, once in your project:
-
-| Skill | Phase | What it does |
+| Skill | When | What it does |
 |---|---|---|
-| `/assess` | 0 Setup | Read-only maturity audit, phase by phase: a score, a verdict, prioritised gaps and risks. Re-run it any time to see where the project stands. See the [evaluation grid](method/assess.md). |
-| `/gates` | 4 Verify | Detects lint, typecheck, test and build commands, declares them, checks they run, installs an environment preflight so a "tests pass" verdict can be trusted. |
-| `/context` | CDLC | Audits what agents read: stale files, duplicated knowledge, hot / warm / cold tiering, load per session. |
-| `/compound` | 6 and 9 | Captures a lesson as a learned rule, with a wrong example, a right example and an executable detection. Two modes: pre-release and incident. |
-| `/status` | all | Where the project stands against the eleven phases, and the next gap. |
-| `/gate` | 1 to 3 | Where an issue stands in the cycle, in one line that names the facts it rests on: not qualified, needs input, qualified, planned, chosen, in progress. |
-| `/qualify` | 1 Define | Rewrites a raw issue into the two-audience contract (problem, impact, observable acceptance criteria, folded technical analysis), sets the label, and stops: a human confirms the intent. |
-| `/plan` | 2 Plan | From a qualified issue, two or three approaches that diverge in strategy, with trade-offs, risks, the rules they honour and a recommendation; posted on the issue, then stops: a human replies `approach: <letter>`. |
-| `/build` | 3 Build | From the chosen approach, cuts the branch from the target base, loads the rules and area guides before the first edit, builds one slice, runs the gates and opens a PR ending with a Verification Run. Never merges. |
+| `/assess` | first, and any time | Scores the repository against the eleven phases, lists the gaps in priority order ([grid](method/assess.md)). |
+| `/init` | once | Renders the constitution, area guides, issue and PR templates, memory and skills. Never overwrites silently. |
+| `/gates` | once, then as needed | Declares the verification gates per area, compares with CI, runs them with captured output. |
+| `/qualify N` | an issue lands | Turns it into a two-audience contract and stops for the author to confirm. |
+| `/plan N` | contract confirmed | Posts two or three approaches that differ in strategy and stops until you reply `approach: <letter>`. |
+| `/build N` | approach chosen | Builds one slice under the rules, runs the gates, opens a PR with the proof. Never merges. |
+| `/gate N` | any time | Where an issue stands, in one line. |
+| `/compound` | after a review or an incident | Turns a lesson into a rule every agent loads next run. |
+| `/context` | when agents seem lost | Audits what agents read: stale files, duplication, load per session. |
+| `/status` | session start | Where the project stands, and the next gap. |
 
-## How it works
+Agents also load the knowledge skills: proof discipline, review checklist, adversarial test
+plan, process rules, decision records, documentation rules.
 
-1. **Install and init.** One `curl | sh` puts the skills and the `aifier` binary in your
-   repository; then `/init` in your agent detects your stack, decisions, CI and engines, shows
-   the `aifier.yml` it inferred, asks the rest, and renders with the binary. Existing files are
-   never overwritten silently.
-2. **Assess.** Run `/assess` in your engine. You get a profile over the eleven phases, prioritised
-   gaps and risks. It reads files, git history and the forge; it changes nothing.
-3. **Gates.** Run `/gates`. From now on every agent deliverable ends with the captured output of
-   lint, typecheck, tests and build, or an explicit `BLOCKED` with the reason.
-4. **Work the cycle.** Issues are qualified into contracts (human gate), planned as two or three
-   distinct approaches (human gate), built one slice at a time under the guards, verified with
-   proof, reviewed from several angles, and merged by a human (human gate).
-5. **Compound.** When a review finds a pattern, or production surfaces an incident, `/compound`
-   turns it into a rule. Every agent loads the rules on its next run. The tenth cycle is
-   mechanically better than the first.
+## The cycle
 
-The three human gates are not optional. The generated skills stop at them by construction, and the
-guards refuse the operations that would skip them: nothing decides intent, picks an architecture or
-merges a pull request on its own.
-
-## Using it day to day
-
-One issue at a time, the same loop every time. Agents run the skills; humans hold three
-decisions. The labels (`<prefix>:todo`, `needs-input`, `in-progress`, `partial`, `done`) carry
-the state on the forge, and `/gate` reads it back in one line.
+Agents run the skills. Humans hold three decisions. Labels carry the state on the forge.
 
 ```mermaid
 flowchart TD
-    I([Raw issue]) --> Q
-
-    subgraph D["1 Define"]
-        Q["/qualify<br/>two-audience contract"]
-        Q -->|open questions| NI1["needs-input<br/>author answers"]
-    end
-    NI1 --> G1
-    Q --> G1{{"Human gate: intent<br/>author confirms the contract<br/>todo"}}
-
-    G1 --> PL
-    subgraph P["2 Plan"]
-        PL["/plan<br/>2 or 3 approaches, trade-offs,<br/>proof per criterion, recommendation"]
-    end
-    PL --> G2{{"Human gate: architecture<br/>reply: approach: &lt;letter&gt;<br/>needs-input"}}
-
-    G2 --> B
-    subgraph C["3 Build · 4 Verify · 5 Review"]
-        B["/build<br/>branch from the target base,<br/>rules and area guides loaded first,<br/>one slice, in-progress"]
-        B --> V["gates run, output captured<br/>or BLOCKED"]
-        V --> PR["pull request<br/>Closes #N · Rules honoured<br/>## Verification Run"]
-        PR --> R["review (checklist, adversarial tests)<br/>PR health gate"]
-    end
-    R --> G3{{"Human gate: acceptance<br/>a human merges<br/>done"}}
-
-    G3 -.->|lesson found| K["6 and 9 Compound<br/>/compound → learned rules"]
-    K -.->|loaded by every agent| PL
-    G3 --> S["7 Ship · 8 Ops · 10 Deprecation<br/>checklist, rollback, flags"]
-
+    I([Issue]) --> Q["/qualify"]
+    Q --> G1{{"you confirm the contract"}}
+    G1 --> PL["/plan"]
+    PL --> G2{{"you reply approach: &lt;letter&gt;"}}
+    G2 --> B["/build → pull request with proof"]
+    B --> R["review"]
+    R --> G3{{"you merge"}}
+    G3 -.->|lesson| K["/compound → learned rules"]
+    K -.->|loaded next run| PL
     classDef gate fill:#fff3cd,stroke:#b58900,color:#000
     class G1,G2,G3 gate
 ```
 
-What you type, in order:
-
-| Moment | Command | What happens | It stops when |
-|---|---|---|---|
-| An issue lands | `/qualify N` | Rewrites it into the contract, grounds the technical part in the code, sets `todo` (or `needs-input` with the questions). | The author confirms the problem and the criteria. |
-| Contract confirmed | `/plan N` | Posts two or three approaches that differ in strategy, with the rules each must honour and how each criterion will be proven; sets `needs-input`. | You reply `approach: <letter>` on the issue, amendments in the same comment. |
-| Approach chosen | `/build N` | Cuts the branch, loads the learned rules and area guides, builds one slice, runs the gates, opens the pull request with its Verification Run; sets `in-progress`. | The pull request is open. It never merges. |
-| Pull request open | review skills | Checklist and adversarial test plan, with the PR health gate: no clean verdict on a red check or a conflict. | A human merges and sets `done`. |
-| A lesson appears | `/compound` | Turns it into a rule with a wrong example, a right example and a detection; every agent loads it next run. | The rule is in the catalogue. |
-| Any time | `/gate N`, `/status` | Where the issue stands, where the project stands. | Read-only. |
-
-What an agent never does here: decide the intent, pick the approach, merge, mark a pull request
-ready, or remove a `need-work` label. Each skill checks the gate behind it before acting and
-refuses to go on without the human signal: an unqualified issue is sent to `/qualify`, a plan
-without an `approach:` reply waits, an issue already in progress asks before resuming.
-
-## What you gain
-
-- **Control without babysitting.** Humans hold three decisions. Everything between them is
-  delegated, with evidence attached.
-- **No claim without proof.** "Tests pass" comes with the command and its output, or it is
-  `BLOCKED`. Reviews cannot approve a PR with conflicts or failing checks.
-- **Mistakes that do not come back.** A bug seen twice is a hole in the system. The rule catalogue
-  closes it for every agent, in every session, from the next run.
-- **One setup, any engine.** The knowledge lives in portable `SKILL.md` files that Claude Code,
-  opencode and pi all load. Switch engine, or run two, without rewriting your context.
-- **A measurable starting point.** `assess` gives you a score you can re-run after each change.
-  Teams following this method report fewer correction iterations after about ten cycles
-  ([source](https://www.sfeir.com/concepts/sdlc-augmente/)); the grid lets you check that on
-  your own repository rather than take it on faith.
+An agent never decides the intent, picks the approach, merges, or marks a pull request ready.
+Each skill checks the gate behind it and stops without your signal.
 
 ## Grounding
 
-aifier does not invent its vocabulary. It implements publicly documented concepts:
-
-- [AI-augmented SDLC](https://www.sfeir.com/concepts/sdlc-augmente/): the eleven phases, three
-  gates and two capitalisations.
-- [Harness engineering](https://www.sfeir.com/concepts/harness-engineering/): guides before the
-  action, sensors after it, and the harnessability of a codebase.
-- [Context engineering](https://www.sfeir.com/concepts/context-engineering/) and the
-  [CDLC](https://www.sfeir.com/concepts/cdlc/): context as a versioned dependency, in tiers.
-- [Issue-based development](https://www.sfeir.com/concepts/issue-based-development/): report a
-  gap, let the agent analyse the system, arbitrate the plan, review, capitalise.
-- [Context flywheel](https://www.sfeir.com/concepts/context-flywheel/): why the loop compounds.
-
-The method pages live in [`method/`](method/), starting with the
-[eleven phases](method/phases.md) and the [assess grid](method/assess.md).
-
-## Layout
-
-```
-install.sh       one-line installer: skills into .agents/skills/, the binary of the tag into .aifier/bin/
-method/          the method (French): the eleven phases and the assess grid
-skills/          the portable skills: assess, init, gates, context, status, gate, the cycle (qualify, plan, build) and the knowledge skills; each collector is a bash script next to its SKILL.md
-src/             the aifier binary (Rust): `aifier render`, the only renderer init calls; update, remove and guards follow
-templates/       files init renders (constitution, area guides, templates, memory, aifier.yml)
-tests/           synthetic repositories, issue payloads and golden outputs for every collector and the renderer
-docs/            this repository's own memory: learned rules, decisions (ADRs), session handoff
-packs/, adapters/   placeholders for stack packs and per-engine guards, empty today
-```
+The vocabulary is the one of the
+[AI-augmented SDLC](https://www.sfeir.com/concepts/sdlc-augmente/): eleven phases, three human
+gates, two capitalisations. Related concepts:
+[harness engineering](https://www.sfeir.com/concepts/harness-engineering/),
+[context engineering](https://www.sfeir.com/concepts/context-engineering/),
+[CDLC](https://www.sfeir.com/concepts/cdlc/),
+[issue-based development](https://www.sfeir.com/concepts/issue-based-development/),
+[context flywheel](https://www.sfeir.com/concepts/context-flywheel/). The method pages are in
+[`method/`](method/).
 
 ## Status
 
-**Alpha, towards `v0.1.0`.** What exists and is tested:
+Alpha, towards `v0.1.0`. Shipped: the installer, fifteen skills, the bash collectors tested
+against golden outputs, and the `aifier` binary with `render`, built for Linux and macOS on every
+tag ([ADR 0002](docs/decisions/0002-aifier-binary.md)). Not yet: per-engine guards,
+`aifier update` and `remove`, native Windows, stack packs.
 
-- the installer, POSIX `sh`, which copies the skills and downloads the binary of a tagged release
-  with its checksum verified;
-- fifteen skills: `assess`, `init`, `gates`, `context`, `status`, `gate`, the cycle (`qualify`,
-  `plan`, `build`) and the knowledge skills, each one blind-run before shipping; the cycle has
-  run end to end on this repository (issue #13: qualified, planned, built in two slices, merged);
-- the collectors in bash (`detect.sh`, `probes.sh`, `status.sh`, `gate.sh`, `run.sh`), diffed
-  against golden outputs on five synthetic repositories in CI;
-- the `aifier` binary with its first subcommand, `render`, byte-identical to the renderer it
-  replaced, built for Linux and macOS on every tag ([ADR 0002](docs/decisions/0002-aifier-binary.md)).
+aifier uses aifier: this repository was set up with `/init` and its issues go through the cycle.
+Open an issue to run the grid on your codebase or to report a friction in a skill.
 
-What does not exist yet: the guards (per-engine hooks), `aifier update` and `aifier remove`,
-native Windows, stack packs. Using aifier needs a POSIX shell, `git`, `curl`, `tar`, and `gh`
-with `jq` for the forge; developing it needs a Rust toolchain.
-
-aifier uses aifier: this repository was set up with `/init`, its issues go through `/qualify`,
-`/plan` and `/build`, its lessons are in [docs/learned-rules.md](docs/learned-rules.md). Open an
-issue to run the grid on your own codebase, or to report a friction in a skill.
+Layout: `install.sh`, `skills/` (one directory per skill, collectors in bash next to the
+`SKILL.md`), `templates/`, `src/` (the binary), `method/` (French), `tests/`, `docs/`.
 
 ## License
 
 [MIT](LICENSE).
-
