@@ -17,6 +17,10 @@ Markdown and YAML in your repository, loaded by Claude Code, opencode and pi.
 curl -fsSL https://raw.githubusercontent.com/mickaelandrieu/aifier/main/install.sh | sh
 ```
 
+The installer picks the latest release, skills and binary. `AIFIER_REF=main` installs the skills
+of the branch without a binary: `/init` then needs a checkout built with `cargo build --release`,
+passed as `AIFIER_SRC`.
+
 Then, in your coding agent:
 
 1. `/assess` measures where the repository stands. It changes nothing.
@@ -29,10 +33,13 @@ forge. No Python, Node or Rust.
 
 <details><summary>Installer options</summary>
 
-The installer puts the skills in `.agents/skills/` and the `aifier` binary in `.aifier/bin/`,
-nothing else. `AIFIER_REF=v1.2.3` pins a release (a branch carries no binary), `AIFIER_DIR`
-changes the skills directory, `AIFIER_SRC=/path/to/clone` installs from a local checkout. Run it
-again to update. Delete the two directories to remove.
+The installer writes four things: the skills in `.agents/skills/`, the `aifier` binary in
+`.aifier/bin/`, the record `.aifier/install.yml` (ref, date, what was installed) and a
+`.claude/skills` symlink to the skills directory, created only when nothing is there yet.
+`AIFIER_REF=v1.2.3` pins a release (a branch carries no binary), `AIFIER_DIR` changes the skills
+directory, `AIFIER_SRC=/path/to/clone` installs from a local checkout (`AIFIER_BIN` names its
+built binary when cargo put it elsewhere than `target/release/`). Run it again to update. Delete
+the four to remove.
 
 </details>
 

@@ -8,16 +8,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: the aifier binary (format, lint, unit tests, release build)
+      - name: the aifier binary (format, lint, unit tests, release build as release.yml builds it)
         run: |
           cargo fmt --check
           cargo clippy --all-targets -- -D warnings
           cargo test
-          cargo build --release
-      - name: deterministic tests of the collectors and the renderer on synthetic repositories
+          host="$(rustc -vV | sed -n 's/^host: //p')"
+          cargo build --release --locked --target "$host"
+          echo "AIFIER_BIN=target/$host/release/aifier" >> "$GITHUB_ENV"
+      - name: deterministic tests of the collectors, the renderer and the installer on synthetic repositories
         run: bash tests/run.sh
       - name: smoke the installer and the collectors on this repository
         run: |
-          AIFIER_SRC=. AIFIER_DIR=skills sh install.sh
+          AIFIER_SRC=. AIFIER_REF=main AIFIER_DIR=skills sh install.sh
           bash skills/init/detect.sh . > /tmp/draft.yml && grep -q '^project: aifier' /tmp/draft.yml
           bash skills/assess/probes.sh . > /tmp/probes.md && grep -q '^## Identity' /tmp/probes.md
