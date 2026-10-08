@@ -1,59 +1,59 @@
-# Les onze phases du SDLC augmenté
+# The eleven phases of the AI-augmented SDLC
 
-Référence : https://www.sfeir.com/concepts/sdlc-augmente/ (et les concepts liés : context-engineering,
-harness-engineering, cdlc, issue-based-development, context-flywheel). Cette page fixe le vocabulaire
-qu'emploient toutes les commandes aifier. Elle ne réinvente rien : elle numérote.
+Reference: https://www.sfeir.com/concepts/sdlc-augmente/ (and the related concepts: context-engineering,
+harness-engineering, cdlc, issue-based-development, context-flywheel). This page fixes the vocabulary
+used by every aifier command. It invents nothing: it numbers.
 
-| N° | Phase | Temps | Ce qui s'y passe | Nature |
+| No. | Phase | Time | What happens there | Nature |
 |---|---|---|---|---|
-| 0 | Setup | Amont | Cadrer le cycle : constitution des agents, gates déclarés, workflow, bases de connaissance | — |
-| 1 | Define | Amont | Une idée devient un contrat : problème, impact, critères d'acceptation observables | **Gate humain** (intention) |
-| 2 | Plan | Amont | Deux ou trois approches d'architecture distinctes, arbitrées par un humain avant le code | **Gate humain** (architecture) |
-| 3 | Build | Cœur | Construire une tranche à la fois, sous les règles apprises | — |
-| 4 | Verify | Cœur | Exécuter lint, typage, tests, build, avec preuve capturée | — |
-| 5 | Review | Cœur | Consolider plusieurs revues parallèles en un verdict | — |
-| 6 | Compound-1 | Capitalisation | Leçons statiques avant livraison, réinjectées au Plan suivant | **Capitalisation** |
-| 7 | Ship | Aval | Checklist de mise en production, rollback écrit à froid, déploiement progressif 5 → 100 % | **Gate humain** (acceptation) |
-| 8 | Ops | Aval | Observer le système en production, 7 à 14 jours | — |
-| 9 | Compound-2 | Capitalisation | Leçons runtime issues de la production, réinjectées au Plan suivant | **Capitalisation** |
-| 10 | Deprecation | Aval | Retirer le code par un retrait annoncé, derrière un flag | — |
+| 0 | Setup | Upstream | Frame the cycle: agent constitution, declared gates, workflow, knowledge bases | — |
+| 1 | Define | Upstream | An idea becomes a contract: problem, impact, observable acceptance criteria | **Human gate** (intent) |
+| 2 | Plan | Upstream | Two or three distinct architecture approaches, decided by a human before any code | **Human gate** (architecture) |
+| 3 | Build | Core | Build one slice at a time, under the learned rules | — |
+| 4 | Verify | Core | Run lint, typecheck, tests, build, with captured proof | — |
+| 5 | Review | Core | Consolidate several parallel reviews into one verdict | — |
+| 6 | Compound-1 | Compounding | Static lessons before delivery, fed back into the next Plan | **Compounding** |
+| 7 | Ship | Downstream | Release checklist, rollback written in advance, progressive deployment 5 → 100 % | **Human gate** (acceptance) |
+| 8 | Ops | Downstream | Observe the system in production, 7 to 14 days | — |
+| 9 | Compound-2 | Compounding | Runtime lessons from production, fed back into the next Plan | **Compounding** |
+| 10 | Deprecation | Downstream | Remove code through an announced withdrawal, behind a flag | — |
 
-## Les trois gates humains
+## The three human gates
 
-Un gate est un point où un agent **doit s'arrêter** et où un humain décide. Deux défauts à surveiller
-quand on outille un projet : le **gate manquant** (un agent qui décide seul de l'intention, de
-l'architecture ou de la fusion) et l'**approbation superflue** (une signature humaine entre deux gates,
-là où les agents devraient porter la responsabilité).
+A gate is a point where an agent **must stop** and where a human decides. Two defects to watch for
+when tooling a project: the **missing gate** (an agent that decides the intent, the architecture or
+the merge on its own) and the **superfluous approval** (a human signature between two gates, where
+the agents should carry the responsibility).
 
-| Gate | Phase | Tenu par | Question tranchée |
+| Gate | Phase | Held by | Question settled |
 |---|---|---|---|
-| Intention | 1 Define | PO, auteur de l'issue | Le contrat reflète-t-il le besoin réel ? |
-| Architecture | 2 Plan | lead, architecte | Quelle approche construit-on ? |
-| Acceptation | 7 Ship | reviewer, mainteneur | Fusionne-t-on et livre-t-on ? |
+| Intent | 1 Define | PO, author of the issue | Does the contract reflect the real need? |
+| Architecture | 2 Plan | lead, architect | Which approach do we build? |
+| Acceptance | 7 Ship | reviewer, maintainer | Do we merge and ship? |
 
-## Les deux capitalisations
+## The two compounding steps
 
-Les deux alimentent le même catalogue de règles apprises, rechargé par tous les agents et consulté
-au Plan du cycle suivant. « Un bug vu deux fois n'est pas un bug, c'est un trou dans le système. »
+Both feed the same catalogue of learned rules, reloaded by every agent and consulted at the Plan of
+the next cycle. "A bug seen twice is not a bug, it is a hole in the system."
 
-- **Compound-1** (phase 6) : leçons tirées du travail et des revues qui viennent d'être faits.
-- **Compound-2** (phase 9) : leçons tirées d'un incident, d'un postmortem, d'un signal d'observabilité.
+- **Compound-1** (phase 6): lessons drawn from the work and the reviews that were just done.
+- **Compound-2** (phase 9): lessons drawn from an incident, a postmortem, an observability signal.
 
-## Les axes transversaux
+## The cross-cutting axes
 
-Trois concepts traversent les phases et servent de grille de lecture à `assess` et `context` :
+Three concepts run through the phases and serve as the reading grid for `assess` and `context`:
 
-- **Harness engineering** : guides (feedforward : AGENTS.md, conventions, templates) et sensors
-  (feedback : tests, linters, typage, revue automatisée) ; la **harnessability** d'une base de code
-  tient à son typage, à ses frontières de modules et à sa structure.
-- **Context engineering et CDLC** : le contexte est une dépendance logicielle, à étages (chaud toujours
-  chargé, intermédiaire à la demande, froid consulté au besoin), avec un cycle Generate → Evaluate →
-  Distribute → Observe. Une spec périmée est plus nuisible qu'une spec absente.
-- **Issue-based development** : on signale un écart, l'agent analyse le système, un humain arbitre
-  le plan, la revue précède la livraison, la leçon est consignée.
+- **Harness engineering**: guides (feedforward: AGENTS.md, conventions, templates) and sensors
+  (feedback: tests, linters, typechecking, automated review); the **harnessability** of a codebase
+  depends on its typing, its module boundaries and its structure.
+- **Context engineering and CDLC**: context is a software dependency, in tiers (hot always loaded,
+  warm on demand, cold consulted when needed), with a Generate → Evaluate → Distribute → Observe
+  cycle. A stale spec is more harmful than no spec at all.
+- **Issue-based development**: a gap is reported, the agent analyses the system, a human decides the
+  plan, review precedes delivery, the lesson is recorded.
 
-## Repères chiffrés publiés
+## Published figures
 
-À prendre comme ordres de grandeur, pas comme seuils : environ 80 % de l'effort humain sur la
-spécification et la revue ; environ 30 % d'itérations de correction en moins après dix cycles ;
-bascule d'équipe vers la dixième itération.
+To be taken as orders of magnitude, not as thresholds: about 80 % of human effort on specification
+and review; about 30 % fewer correction iterations after ten cycles; team tipping point around the
+tenth iteration.
