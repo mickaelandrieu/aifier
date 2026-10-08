@@ -40,17 +40,23 @@ Wait for the answers. Write the confirmed `aifier.yml` at the repository root.
 ## Step 3 — Render
 
 Templates live in `templates/` next to this file. The rendering is deterministic: run the
-renderer, then fill only what it leaves for you.
+renderer, the `aifier` binary the installer put under `.aifier/bin/`, then fill only what it
+leaves for you.
 
 ```bash
-python3 -I "<directory of this SKILL.md>/render.py" aifier.yml "<directory of this SKILL.md>/templates" . --skills "<project skills dir>"
+.aifier/bin/aifier render aifier.yml "<directory of this SKILL.md>/templates" . --skills "<project skills dir>"
 ```
+
+When `.aifier/bin/aifier` is missing, stop with `BLOCKED: aifier binary missing; run
+AIFIER_REF=<tag> sh install.sh (see the releases page), or build it with cargo build --release
+and copy target/release/aifier to .aifier/bin/`. There is no by-hand rendering: one renderer,
+one result (ADR 0002).
 
 It writes every target below, skips a file that already exists (so the merge, side-file and skip
 choices of Step 2 are honoured by renaming or removing before, never by `--force` on a file the
 person did not mark merge), drops the lines whose gate is `null`, substitutes the knowledge
 skills in place with the gates of the area that owns the most of them, and prints what it wrote.
-Without `python3`, render by hand from the table below with the same rules. Then open each
+Then open each
 written file and fill the placeholders it left: `{{project_summary}}` (two sentences from the
 README and the manifests) and, in each area guide, `{{area.summary}}`, `{{area.layout}}`,
 `{{area.commands}}`, `{{area.patterns}}` from what the repository already documents. When the

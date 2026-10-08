@@ -3,6 +3,14 @@
 Read at session start, update before stopping. Keep it under forty lines: current branch and
 goal, what is done and proven, what is blocked, the next step.
 
+## 2026-10-08 (init on the binary)
+
+- Branch `feat/21-init-binary` (on top of slice 2), issue #21 slice 3 of 3: `init` renders with
+  `.aifier/bin/aifier render` and stops with `BLOCKED` without it; `render.py` deleted; no Python
+  left under `skills/`. Opened on `main` once #27 lands. Closes #21 when merged.
+- Next: a review of the three slices, then the first release tag `v0.1.0` pushed by the agent on the
+  maintainer's instruction.
+
 ## 2026-10-08 (release)
 
 - Branch `feat/21-release-installer`, issue #21 slice 2 of 3: `release.yml` builds four targets on a
