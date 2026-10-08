@@ -1,0 +1,89 @@
+### status.sh 
+# aifier status · status-fx · DATE
+
+- config: aifier.yml (5 lines)
+- installed: no .aifier/install.yml
+- last assess: .aifier/assess-2026-10-01.md
+- verdict: Tooled cycle
+
+| Phase | Score | Level |
+|---|---|---|
+| 0 Setup | 2.0 | tooled |
+| 1 Define | 1.5 | emerging |
+
+- next gap: 1. 1.2 issue template absent: add .github/ISSUE_TEMPLATE
+- learned rules: 1 (last change 2026-10-01)
+- decisions: docs/decisions ABSENT
+- handoff: docs/handoff.md ABSENT
+- drift: no .aifier/manifest.yml
+- last gates run: none
+- update: re-run the install line to refresh the skills
+exit: 0
+### status.sh --min "Governed cycle"
+# aifier status · status-fx · DATE
+
+- config: aifier.yml (5 lines)
+- installed: no .aifier/install.yml
+- last assess: .aifier/assess-2026-10-01.md
+- verdict: Tooled cycle
+
+| Phase | Score | Level |
+|---|---|---|
+| 0 Setup | 2.0 | tooled |
+| 1 Define | 1.5 | emerging |
+
+- next gap: 1. 1.2 issue template absent: add .github/ISSUE_TEMPLATE
+- learned rules: 1 (last change 2026-10-01)
+- decisions: docs/decisions ABSENT
+- handoff: docs/handoff.md ABSENT
+- drift: no .aifier/manifest.yml
+- last gates run: none
+- update: re-run the install line to refresh the skills
+
+status: BELOW minimum (Governed cycle)
+exit: 3
+### status.sh --min "Cycle outillé"
+# aifier status · status-fx · DATE
+
+- config: aifier.yml (5 lines)
+- installed: no .aifier/install.yml
+- last assess: .aifier/assess-2026-10-01.md
+- verdict: Tooled cycle
+
+| Phase | Score | Level |
+|---|---|---|
+| 0 Setup | 2.0 | tooled |
+| 1 Define | 1.5 | emerging |
+
+- next gap: 1. 1.2 issue template absent: add .github/ISSUE_TEMPLATE
+- learned rules: 1 (last change 2026-10-01)
+- decisions: docs/decisions ABSENT
+- handoff: docs/handoff.md ABSENT
+- drift: no .aifier/manifest.yml
+- last gates run: none
+- update: re-run the install line to refresh the skills
+
+status: at or above minimum (Cycle outillé)
+exit: 0
+### status.sh --min "bogus"
+# aifier status · status-fx · DATE
+
+- config: aifier.yml (5 lines)
+- installed: no .aifier/install.yml
+- last assess: .aifier/assess-2026-10-01.md
+- verdict: Tooled cycle
+
+| Phase | Score | Level |
+|---|---|---|
+| 0 Setup | 2.0 | tooled |
+| 1 Define | 1.5 | emerging |
+
+- next gap: 1. 1.2 issue template absent: add .github/ISSUE_TEMPLATE
+- learned rules: 1 (last change 2026-10-01)
+- decisions: docs/decisions ABSENT
+- handoff: docs/handoff.md ABSENT
+- drift: no .aifier/manifest.yml
+- last gates run: none
+- update: re-run the install line to refresh the skills
+unknown --min 'bogus'
+exit: 2

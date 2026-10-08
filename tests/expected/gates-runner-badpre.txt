@@ -1,0 +1,7 @@
+## Verification Run
+
+Date: DATE · Config: aifier-badpre.yml
+
+BLOCKED: preflight `false` exited 1
+  $ false   (cwd ROOT)
+exit: 2

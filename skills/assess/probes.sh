@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # aifier assess probes: deterministic evidence collection. Read-only. Output: markdown on stdout.
+# A line that comes from a keyword or regex scan says so: it lists candidates, never proof.
+# AIFIER_SINCE sets the activity window (a git --since value, default 90.days); a window holding
+# fewer than 5 commits falls back to a sample of the last 100 and says so.
 set -u
 ROOT="${1:-.}"
 cd "$ROOT" || { echo "cannot cd to $ROOT"; exit 1; }
@@ -10,6 +13,9 @@ exists() { [ -e "$1" ] && echo "present ($(wc -l < "$1" 2>/dev/null | tr -d ' ')
 section() { printf '\n## %s\n\n' "$1"; }
 line() { printf -- '- %s\n' "$*"; }
 src_files() { git ls-files 2>/dev/null | grep -Ev '(^|/)(node_modules|dist|build|\.venv|vendor)/' ; }
+src_files0() { git ls-files -z 2>/dev/null | grep -zvE '(^|/)(node_modules|dist|build|\.venv|vendor)/' ; }
+has_head=0; git rev-parse --verify -q HEAD >/dev/null 2>&1 && has_head=1
+shallow=no; [ -f "$(git rev-parse --git-dir 2>/dev/null)/shallow" ] && shallow=yes
 
 echo "# aifier assess probes"
 line "root: $ROOT"
@@ -17,9 +23,15 @@ line "date: $(date +%F)"
 
 section "Identity"
 line "remote: $(git remote get-url origin 2>/dev/null || echo none)"
-line "default branch: $(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's#origin/##' || echo unknown)"
-line "commits total: $(git rev-list --count HEAD 2>/dev/null || echo 0)"
-line "last commit: $(git log -1 --format=%cs 2>/dev/null || echo none)"
+db="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)"; db="${db#origin/}"
+line "default branch: ${db:-unknown (no origin/HEAD)}"
+if [ "$has_head" = 1 ]; then
+  line "commits total: $(git rev-list --count HEAD 2>/dev/null || echo 0)"
+  line "last commit: $(git log -1 --format=%cs 2>/dev/null || echo none)"
+else
+  line "commits: none"
+fi
+if [ "$shallow" = yes ]; then line "shallow clone: yes (commit counts are partial)"; else line "shallow clone: no"; fi
 line "tracked files: $(src_files | wc -l | tr -d ' ')"
 line "languages (by extension, top 8):"
 src_files | sed -n 's/.*\.\([A-Za-z0-9]*\)$/\1/p' | sort | uniq -c | sort -rn | head -8 | awk '{printf "  - %s: %s\n", $2, $1}'
@@ -32,7 +44,7 @@ done
 line "sub-project AGENTS.md/CLAUDE.md: $(src_files | grep -E '/(AGENTS|CLAUDE)\.md$' | tr '\n' ' ')"
 line "docs dirs: $(ls -d docs doc documentation 2>/dev/null | tr '\n' ' ')"
 [ -d docs ] && line "docs files: $(find docs -type f -name '*.md' | wc -l | tr -d ' ') markdown, top-level: $(ls docs | tr '\n' ' ')"
-line "adr dirs: $(find . -type d \( -iname 'adr' -o -iname 'adrs' -o -iname 'decisions' \) -not -path '*/node_modules/*' 2>/dev/null | tr '\n' ' ')"
+line "adr dirs: $(find . -type d \( -iname 'adr' -o -iname 'adrs' -o -iname 'decisions' \) -not -path '*/node_modules/*' 2>/dev/null | sort | tr '\n' ' ')"
 line "CHANGELOG: $(exists CHANGELOG.md)"
 line "README: $(exists README.md)"
 line "CONTRIBUTING: $(exists CONTRIBUTING.md)"
@@ -46,15 +58,16 @@ done
 line "session load (constitution + @includes): $load lines"
 # C4 dead paths cited in constitution/docs
 dead=0; total=0
-for f in AGENTS.md CLAUDE.md $( [ -d docs ] && find docs -name '*.md' | head -50 ); do
+for f in AGENTS.md CLAUDE.md $( [ -d docs ] && find docs -name '*.md' | sort | head -50 ); do
   [ -f "$f" ] || continue
   for p in $(grep -oE '`[A-Za-z0-9_./-]+\.[a-z]{1,5}`' "$f" | tr -d '`' | grep '/' | sort -u); do
     total=$((total+1)); [ -e "$p" ] || dead=$((dead+1))
   done
 done
 line "paths cited in constitution/docs: $total, dead: $dead"
-line "constitution last change: $(git log -1 --format=%cs -- AGENTS.md CLAUDE.md 2>/dev/null || echo n/a); docs last change: $(git log -1 --format=%cs -- docs 2>/dev/null || echo n/a); code last change: $(git log -1 --format=%cs 2>/dev/null)"
-line "docs commits in last $SINCE: $(git log --since="$SINCE" --format=%h -- docs AGENTS.md CLAUDE.md 2>/dev/null | wc -l | tr -d ' ') / all commits: $(git log --since="$SINCE" --format=%h 2>/dev/null | wc -l | tr -d ' ')"
+cl=$(git log -1 --format=%cs -- AGENTS.md CLAUDE.md 2>/dev/null); dl=$(git log -1 --format=%cs -- docs 2>/dev/null); xl=$(git log -1 --format=%cs 2>/dev/null)
+line "constitution last change: ${cl:-n/a}; docs last change: ${dl:-n/a}; code last change: ${xl:-n/a}"
+line "docs commits since $SINCE: $(git log --since="$SINCE" --format=%h -- docs AGENTS.md CLAUDE.md 2>/dev/null | wc -l | tr -d ' ') / all commits: $(git log --since="$SINCE" --format=%h 2>/dev/null | wc -l | tr -d ' ')"
 
 section "H. Harnessability"
 line "type-check config: $(ls mypy.ini pyrightconfig.json tsconfig.json 2>/dev/null | tr '\n' ' ') $(grep -lE '\[tool\.(mypy|pyright)\]' pyproject.toml */pyproject.toml 2>/dev/null | tr '\n' ' ')"
@@ -69,11 +82,11 @@ line "runtime pins: $(ls .python-version .nvmrc .node-version .tool-versions 2>/
 line "containers: $(ls Dockerfile */Dockerfile docker-compose.y*ml compose.y*ml 2>/dev/null | tr '\n' ' ')"
 line "Makefile targets: $( [ -f Makefile ] && grep -oE '^[a-zA-Z_-]+:' Makefile | tr -d ':' | tr '\n' ' ' || echo none)"
 line "package.json scripts: $( [ -f package.json ] && have jq && jq -r '.scripts // {} | keys | join(" ")' package.json || echo none)"
-line "generators/templates: $(find . -maxdepth 3 -type d \( -iname 'templates' -o -iname 'scaffold*' -o -iname 'generators' -o -iname 'examples' \) -not -path '*/node_modules/*' -not -path './.git/*' 2>/dev/null | tr '\n' ' ')"
+line "generators/templates: $(find . -maxdepth 3 -type d \( -iname 'templates' -o -iname 'scaffold*' -o -iname 'generators' -o -iname 'examples' \) -not -path '*/node_modules/*' -not -path './.git/*' 2>/dev/null | sort | tr '\n' ' ')"
 
 section "Tests"
 line "test files: $(src_files | grep -E '(^|/)(test_[^/]+\.py|[^/]+_test\.py|[^/]+\.(test|spec)\.[jt]sx?)$' | wc -l | tr -d ' ')"
-line "test dirs: $(find . -type d \( -name tests -o -name test -o -name __tests__ -o -name e2e \) -not -path '*/node_modules/*' -not -path './.git/*' 2>/dev/null | tr '\n' ' ')"
+line "test dirs: $(find . -type d \( -name tests -o -name test -o -name __tests__ -o -name e2e \) -not -path '*/node_modules/*' -not -path './.git/*' 2>/dev/null | sort | tr '\n' ' ')"
 line "e2e tooling: $(grep -lE 'playwright|cypress|puppeteer' package.json */package.json pyproject.toml 2>/dev/null | tr '\n' ' ')"
 line "coverage config: $(grep -lE 'coverage|--cov|c8|istanbul' pyproject.toml setup.cfg .coveragerc package.json vitest.config.* jest.config.* 2>/dev/null | tr '\n' ' ')"
 
@@ -94,39 +107,56 @@ line "dead code tooling: $(grep -lE 'vulture|knip|ts-prune|deadcode' pyproject.t
 line "feature flags lib: $(grep -lE 'unleash|launchdarkly|flipt|flagsmith|growthbook' pyproject.toml package.json 2>/dev/null | tr '\n' ' ')"
 line "structured logging / tracing: $(grep -lE 'structlog|opentelemetry|langfuse|sentry|datadog' pyproject.toml package.json 2>/dev/null | tr '\n' ' ')"
 
-section "Secrets (candidates, read before citing)"
+section "Secrets (narrow regex scan, candidates: read before citing)"
 if have gitleaks; then
   line "gitleaks: $(gitleaks detect --no-banner --redact --exit-code 0 2>&1 | grep -oE '(no leaks found|leaks found: [0-9]+)' | head -1)"
 else
   line "gitleaks: not installed"
 fi
-line "tracked files with secret-looking assignments (max 15):"
-src_files | grep -vE '\.(png|jpg|gif|pdf|svg|lock)$' | xargs grep -nIE -i '(api[_-]?key|secret|password|passwd|token)\s*[:=]\s*["'"'"']?[A-Za-z0-9_\-\/+=]{8,}' 2>/dev/null | grep -viE 'example|changeme|your[_-]|<|\$\{|\$[A-Z_]+|os\.environ|getenv|process\.env|secrets\.|\.get\(' | head -15 | sed 's/^/  - /'
+line "secret-looking assignments in tracked files (regex: key, then : or =, then 8+ value characters; max 15):"
+scan_list="$(mktemp "${TMPDIR:-/tmp}/aifier-probes.XXXXXX")"; trap 'rm -f "$scan_list"' EXIT
+src_files0 | grep -zvE '\.(png|jpg|gif|pdf|svg|lock)$' > "$scan_list"
+if [ -s "$scan_list" ]; then
+  xargs -0 grep -nHIiE '(api[_-]?key|secret[_a-z]*|password[_a-z]*|passwd|token)["'"'"']?[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_/+=-]{8,}' < "$scan_list" 2>/dev/null \
+    | grep -viE 'example|changeme|your[_-]|<|\$\{|\$[A-Z_]+|os\.environ|getenv|process\.env|secrets\.|\.get\(' | head -15 | sed 's/^/  - /'
+else
+  printf '  - no tracked file to scan\n'
+fi
 line "tracked .env files: $(src_files | grep -E '(^|/)\.env(\.[a-z]+)?$' | grep -v example | tr '\n' ' ')"
 
 section "Git activity"
-WIN="--since=$SINCE"
-n=$(git log $WIN --no-merges --format=%h | wc -l | tr -d ' ')
-if [ "$n" -lt 20 ]; then WIN="-n 100"; n=$(git log $WIN --no-merges --format=%h | wc -l | tr -d ' '); line "window: last $SINCE too sparse, falling back to last 100 commits (ending $(git log -1 --format=%cs))"; else line "window: last $SINCE"; fi
-line "non-merge commits: $n; merge commits: $(git log $WIN --merges --format=%h | wc -l | tr -d ' ')"
-conv=$(git log $WIN --no-merges --format=%s | grep -cE '^(feat|fix|docs|style|refactor|test|chore|ci|build|perf)(\([^)]*\))?!?:' )
-line "conventional commit subjects: $conv / $n"
-line "commits referencing an issue (#N): $(git log $WIN --no-merges --format='%s %b' | grep -cE '#[0-9]+') / $n"
-code=0; both=0
-for h in $(git log $WIN --no-merges --format=%h | head -300); do
-  files=$(git show --format= --name-only "$h")
-  echo "$files" | grep -qE '\.(py|ts|tsx|js|jsx|go|rs|java|kt|rb|php)$' || continue
-  code=$((code+1))
-  echo "$files" | grep -qE '(^|/)(tests?|__tests__|e2e)/|test_[^/]+\.py|_test\.py|\.(test|spec)\.' && both=$((both+1))
-done
-line "code commits also touching tests: $both / $code"
-line "commit size (lines changed, non-merge, sorted sample):"
-git log $WIN --no-merges --shortstat --format= | awk '/changed/ {a=0; d=0; for(i=1;i<=NF;i++){ if($(i+1) ~ /insertion/) a=$i; if($(i+1) ~ /deletion/) d=$i }; print a+d}' | sort -n | awk '{v[NR]=$1} END { if (NR==0) {print "  - no data"; exit} printf "  - count %d, median %d, p90 %d\n", NR, v[int((NR+1)/2)], v[int(NR*0.9)+ (NR*0.9==int(NR*0.9)?0:1)] }'
-line "merge authors (who merges): $(git log $WIN --merges --format=%an | sort | uniq -c | sort -rn | head -5 | awk '{$1=$1; print}' | tr '\n' ';')"
-line "direct commits on default branch (non-merge, first-parent): $(git log $WIN --first-parent --no-merges --format=%h "$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || echo HEAD)" 2>/dev/null | wc -l | tr -d ' ')"
-line "postmortem/incident files: $(src_files | grep -iE 'postmortem|post-mortem|incident' | head -5 | tr '\n' ' ')"
-line "migrations: $(find . -type d \( -iname 'migrations' -o -iname 'migration' -o -iname 'alembic' -o -path '*/database/scripts' \) -not -path '*/node_modules/*' -not -path './.git/*' 2>/dev/null | head -3 | tr '\n' ' ')"
-line "tags: $(git tag | wc -l | tr -d ' '), latest: $(git describe --tags --abbrev=0 2>/dev/null || echo none)"
+if [ "$has_head" = 0 ]; then
+  line "commits: none"
+else
+  n_win=$(git log --since="$SINCE" --no-merges --format=%h | wc -l | tr -d ' ')
+  if [ "$n_win" -lt 5 ]; then
+    WIN="-n 100"; n=$(git log $WIN --no-merges --format=%h | wc -l | tr -d ' ')
+    line "window: since $SINCE too sparse ($n_win in window, fewer than 5), sample is the last 100 commits: $n in sample (ending $(git log -1 --format=%cs))"
+  else
+    WIN="--since=$SINCE"; n=$n_win
+    line "window: since $SINCE: $n in window, $n in sample"
+  fi
+  [ "$shallow" = yes ] && line "shallow clone: counts below are partial"
+  line "non-merge commits: $n; merge commits: $(git log $WIN --merges --format=%h | wc -l | tr -d ' ')"
+  conv=$(git log $WIN --no-merges --format=%s | grep -cE '^(feat|fix|docs|style|refactor|test|chore|ci|build|perf)(\([^)]*\))?!?:' )
+  line "conventional commit subjects: $conv / $n"
+  line "commits referencing an issue (#N): $(git log $WIN --no-merges --format='%s %b' | grep -cE '#[0-9]+') / $n"
+  code=0; both=0
+  for h in $(git log $WIN --no-merges --format=%h | head -300); do
+    files=$(git show --format= --name-only "$h")
+    echo "$files" | grep -qE '\.(py|ts|tsx|js|jsx|go|rs|java|kt|rb|php)$' || continue
+    code=$((code+1))
+    echo "$files" | grep -qE '(^|/)(tests?|__tests__|e2e)/|test_[^/]+\.py|_test\.py|\.(test|spec)\.' && both=$((both+1))
+  done
+  line "code commits also touching tests: $both / $code"
+  line "commit size (lines changed, non-merge, sorted sample):"
+  git log $WIN --no-merges --shortstat --format= | awk '/changed/ {a=0; d=0; for(i=1;i<=NF;i++){ if($(i+1) ~ /insertion/) a=$i; if($(i+1) ~ /deletion/) d=$i }; print a+d}' | sort -n | awk '{v[NR]=$1} END { if (NR==0) {print "  - no data"; exit} printf "  - count %d, median %d, p90 %d\n", NR, v[int((NR+1)/2)], v[int(NR*0.9)+ (NR*0.9==int(NR*0.9)?0:1)] }'
+  line "merge authors (who merges): $(git log $WIN --merges --format=%an | sort | uniq -c | sort -rn | head -5 | awk '{$1=$1; print}' | tr '\n' ';')"
+  line "direct commits on default branch (non-merge, first-parent): $(git log $WIN --first-parent --no-merges --format=%h "$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || echo HEAD)" 2>/dev/null | wc -l | tr -d ' ')"
+  line "postmortem/incident files: $(src_files | grep -iE 'postmortem|post-mortem|incident' | head -5 | tr '\n' ' ')"
+  line "migrations: $(find . -type d \( -iname 'migrations' -o -iname 'migration' -o -iname 'alembic' -o -path '*/database/scripts' \) -not -path '*/node_modules/*' -not -path './.git/*' 2>/dev/null | sort | head -3 | tr '\n' ' ')"
+  line "tags: $(git tag | wc -l | tr -d ' '), latest: $(git describe --tags --abbrev=0 2>/dev/null || echo none)"
+fi
 
 section "GitHub (gh)"
 if have gh && gh auth status >/dev/null 2>&1 && gh repo view --json nameWithOwner >/dev/null 2>&1; then
@@ -156,7 +186,7 @@ if have gh && gh auth status >/dev/null 2>&1 && gh repo view --json nameWithOwne
   prs=$(gh pr list --state merged --limit 100 --json number,title,body,additions,deletions,changedFiles,mergedBy,reviews,mergedAt 2>/dev/null)
   since=$(date -v-90d +%F 2>/dev/null || date -d '-90 days' +%F)
   recent=$(echo "$prs" | jq --arg since "$since" '[.[] | select(.mergedAt >= $since)] | length')
-  if [ "${recent:-0}" -ge 10 ]; then line "PRs merged in last $SINCE:"; else line "PRs merged (last 100, window too sparse):"; since="0000-00-00"; fi
+  if [ "${recent:-0}" -ge 10 ]; then line "PRs merged since $SINCE:"; else line "PRs merged (last 100, window too sparse):"; since="0000-00-00"; fi
   echo "$prs" | jq -r --arg since "$since" '
     [.[] | select(.mergedAt >= $since)] |
     "  - count: \(length)\n  - referencing an issue (#N): \(map(select((.title + (.body // "")) | test("#[0-9]+"))) | length)\n  - with at least one review: \(map(select((.reviews | length) > 0)) | length)\n  - median changed files: \(if length>0 then (map(.changedFiles) | sort | .[length/2|floor]) else 0 end), median lines: \(if length>0 then (map(.additions+.deletions) | sort | .[length/2|floor]) else 0 end)\n  - merged by: \(map(.mergedBy.login // "unknown") | group_by(.) | map("\(.[0]) \(length)") | join(", "))\n  - merged by a bot: \(map(select((.mergedBy.login // "") | test("\\[bot\\]|bot$"))) | length)"' 2>/dev/null
@@ -169,5 +199,5 @@ fi
 section "Aifier footprint"
 line "aifier.yml: $(exists aifier.yml)"
 line "rules catalogue: $(src_files | grep -iE 'learned-rules|rules/README|RULE-[0-9]+' | head -3 | tr '\n' ' ')"
-line "process skills: $(for s in verification-evidence compound review-checklist workflow-label assess; do find .agents/skills .claude/skills .opencode/skills -maxdepth 1 -name "$s" -o -maxdepth 1 -name "aifier-$s" 2>/dev/null; done | tr '\n' ' ')"
+line "process skills: $(for s in verification-evidence compound review-checklist workflow-label assess; do find .agents/skills .claude/skills .opencode/skills -maxdepth 1 -name "$s" -o -maxdepth 1 -name "aifier-$s" 2>/dev/null; done | sort | tr '\n' ' ')"
 line "checkpoints dir: $(ls -d .aifier/checkpoints 2>/dev/null | tr '\n' ' ')"

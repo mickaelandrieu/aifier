@@ -1,0 +1,17 @@
+## Verification Run
+
+Date: DATE · Config: aifier-edge.yml
+
+warning: area api declared twice, keeping the last block
+
+- preflight ok: `sh -c 'echo a, b'`
+- preflight ok: `test -f aifier.yml`
+
+- api/lint: OK (exit 0) `echo second` → .aifier/gates/api-lint.log
+  $ echo second   (cwd ROOT/api)
+  second
+- api/test: not declared (gap)
+- api/typecheck: not declared (gap)
+- api/build: not declared (gap)
+BLOCKED: area dir ghost missing
+exit: 2

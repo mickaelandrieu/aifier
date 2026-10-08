@@ -1,0 +1,64 @@
+{
+  "issue": {
+    "number": 7,
+    "body": "## Problem\n\nThe export button does nothing when the list is empty.\n\n## Impact\n\nSupport receives one ticket a week; unknown cost.\n\n## Acceptance criteria\n\n- [x] When the list is empty and the export button is pressed, then a message says there is nothing to export.\n\n<details><summary>Technical analysis</summary>\n\nAffected areas: `web` (guide: `web/AGENTS.md`)\nSuspected cause: `web/src/export.ts:12`\nConstraints: RULE-001\nNon-binding approach: left to plan\nOpen questions: none\n\n</details>",
+    "labels": [
+      {
+        "name": "sdlc:done"
+      },
+      {
+        "name": "sdlc:todo"
+      },
+      {
+        "name": "bug"
+      }
+    ],
+    "comments": [
+      {
+        "author": {
+          "login": "fixture-author"
+        },
+        "body": "contract: ok",
+        "createdAt": "2026-09-10T11:00:00Z"
+      },
+      {
+        "author": {
+          "login": "fixture-agent"
+        },
+        "body": "## Plan\n\n### Approach A — Guard in the handler\nWhat changes: the handler returns a message when the list is empty.\nTouches: `web`: `src/export.ts`; protected: no\nSlices: one PR\nHonours: RULE-001\nTrade-offs: + small / − the rule lives in the adapter\nRisk: none noticed\nProof: new test: empty list yields the message\nEffort: S\n\n### Recommendation\nA.\n### To decide\nReply with `approach: <letter>`.",
+        "createdAt": "2026-09-11T10:00:00Z"
+      },
+      {
+        "author": {
+          "login": "fixture-maintainer"
+        },
+        "body": "approach: a",
+        "createdAt": "2026-09-12T09:00:00Z"
+      },
+      {
+        "author": {
+          "login": "fixture-maintainer"
+        },
+        "body": "Merged in #42, closing.",
+        "createdAt": "2026-09-14T09:00:00Z"
+      }
+    ]
+  },
+  "prs": [
+    {
+      "number": 45,
+      "body": "Follow-up on the export flow; see the discussion in `#7` and in the fence below.\n\n```\nfixes #7\n```\n\nCloses #71.",
+      "closingIssuesReferences": [
+        {
+          "number": 71,
+          "repository": {
+            "name": "export",
+            "owner": {
+              "login": "acme"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

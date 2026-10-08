@@ -20,14 +20,22 @@ skill: the `gate` skill next to it documents the states. Agents never write an `
    exit has printed `BLOCKED: <reason>`: repeat that line and stop, there is no prose fallback.
    Quote the printed `state:` line in the report.
 2. Act on the printed state. `qualified` or `qualified (partial)`: continue. `not-qualified`: say
-   "not qualified, run `/qualify N`" and stop. `needs-input`: the author has questions to answer;
-   stop. `in-progress`: name every label and pull request the line carries and stop; planning
-   happens before work, not during it.
+   "not qualified, run `/qualify N`" and stop. `proposed`: say "waiting for `contract: ok` on
+   #N" and stop; the intent gate is the author's, not yours. `needs-input`: the author has
+   questions to answer; stop. `in-progress`: name every label and pull request the line carries
+   and stop; planning happens before work, not during it. `done`: say "issue closed by the
+   cycle" and stop.
 3. `chosen <letter>`: say "already planned, approach <letter> chosen; run `/build N`" and stop.
    `planned`: say "already planned, waiting for `approach:` on #N" and stop. Re-plan only when
    the person asks for it explicitly; the new comment's first line is still `## Plan` and its second line is "Supersedes the plan
    of <date>".
-4. Fetch the issue: `gh issue view N --repo {{repo}} --json title,body,labels,comments`.
+4. Check once that the workflow labels exist: `gh label list --repo {{repo}} --search
+   "{{label_prefix}}:" --limit 100 --json name -q '.[].name'`. When any of
+   `{{label_prefix}}:todo`, `{{label_prefix}}:in-progress`, `{{label_prefix}}:done`,
+   `{{label_prefix}}:partial`, `{{label_prefix}}:needs-input` is missing, print
+   `BLOCKED: workflow labels missing` followed by one line per missing label,
+   `gh label create "{{label_prefix}}:<state>" --repo {{repo}}`, and stop.
+5. Fetch the issue: `gh issue view N --repo {{repo}} --json title,body,labels,comments`.
 
 ## Step 1 — Load what constrains the plan
 

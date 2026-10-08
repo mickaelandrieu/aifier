@@ -5,9 +5,10 @@
 ## Identity
 
 - remote: https://example.com/acme/dormant.git
-- default branch: 
+- default branch: unknown (no origin/HEAD)
 - commits total: 5
 - last commit: 2025-01-05
+- shallow clone: no
 - tracked files: 1
 - languages (by extension, top 8):
   - toml: 1
@@ -34,8 +35,8 @@
 - CONTRIBUTING: absent
 - session load (constitution + @includes): 0 lines
 - paths cited in constitution/docs: 0, dead: 0
-- constitution last change: ; docs last change: ; code last change: 2025-01-05
-- docs commits in last 2026-08-01: 0 / all commits: 0
+- constitution last change: n/a; docs last change: n/a; code last change: 2025-01-05
+- docs commits since 2026-08-01: 0 / all commits: 0
 
 ## H. Harnessability
 
@@ -69,15 +70,15 @@
 - feature flags lib: 
 - structured logging / tracing: 
 
-## Secrets (candidates, read before citing)
+## Secrets (narrow regex scan, candidates: read before citing)
 
 - gitleaks: 
-- tracked files with secret-looking assignments (max 15):
+- secret-looking assignments in tracked files (regex: key, then : or =, then 8+ value characters; max 15):
 - tracked .env files: 
 
 ## Git activity
 
-- window: last 2026-08-01 too sparse, falling back to last 100 commits (ending 2025-01-05)
+- window: since 2026-08-01 too sparse (0 in window, fewer than 5), sample is the last 100 commits: 5 in sample (ending 2025-01-05)
 - non-merge commits: 5; merge commits: 0
 - conventional commit subjects: 5 / 5
 - commits referencing an issue (#N): 0 / 5

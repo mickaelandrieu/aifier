@@ -13,17 +13,24 @@
     "comments": [
       {
         "author": {
-          "login": "fixture-author"
+          "login": "fixture-agent"
         },
         "body": "Qualified. Please confirm the problem and the acceptance criteria reflect the need, or edit them, then reply `contract: ok`.\nNext step after your confirmation: `/plan 7`.",
         "createdAt": "2026-09-10T10:00:00Z"
       },
       {
         "author": {
-          "login": "fixture-author"
+          "login": "acme-ci[bot]"
         },
-        "body": "Contract: OK\nThanks, that is the need.",
-        "createdAt": "2026-09-10T11:00:00Z"
+        "body": "contract: ok\nautomated approval",
+        "createdAt": "2026-09-10T10:05:00Z"
+      },
+      {
+        "author": {
+          "login": "release-bot"
+        },
+        "body": "Contract: OK",
+        "createdAt": "2026-09-10T10:06:00Z"
       }
     ]
   },

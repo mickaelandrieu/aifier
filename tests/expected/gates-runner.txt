@@ -4,11 +4,14 @@ Date: DATE · Config: aifier.yml
 
 - preflight ok: `test -f aifier.yml`
 
-CI comparison (.github/workflows/ci.yml):
-- root/lint: found in CI
-- root/test: found in CI
-- api/lint: found in CI
-- api/test: found in CI
+CI comparison (.github/workflows/ci.yml, .github/workflows/release.yml):
+- root/lint: run step matches `sh -c 'echo lint ok'`
+- root/test: token hit (not a step): `sh`
+- api/lint: token hit (not a step): `echo`
+- api/test: token hit (not a step): `printf`
+- apps/web/lint: token hit (not a step): `echo`
+- apps/web/test: no token hit: `true`
+- apps/web/build: token hit (not a step): `printf`
 
 - root/lint: OK (exit 0) `sh -c 'echo lint ok'` → .aifier/gates/root-lint.log
   $ sh -c 'echo lint ok'   (cwd ROOT)
@@ -27,6 +30,15 @@ CI comparison (.github/workflows/ci.yml):
   three
   four
 - api/build: not declared (gap)
+- apps/web/lint: OK (exit 0) `echo web lint from $(basename "$PWD")` → .aifier/gates/apps_web-lint.log
+  $ echo web lint from $(basename "$PWD")   (cwd ROOT/apps/web)
+  web lint from web
+- apps/web/typecheck: not declared (gap)
+- apps/web/test: OK (exit 0) `true` → .aifier/gates/apps_web-test.log
+  $ true   (cwd ROOT/apps/web)
+- apps/web/build: OK (exit 0) `NODE_ENV=test printf "built\n"` → .aifier/gates/apps_web-build.log
+  $ NODE_ENV=test printf "built\n"   (cwd ROOT/apps/web)
+  built
 
 Verdict: FAIL (1 gate)
 exit: 1

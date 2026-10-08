@@ -40,7 +40,13 @@
       "body": "Unrelated change. Closes #70.",
       "closingIssuesReferences": [
         {
-          "number": 70
+          "number": 70,
+          "repository": {
+            "name": "export",
+            "owner": {
+              "login": "acme"
+            }
+          }
         }
       ]
     },
@@ -49,7 +55,28 @@
       "body": "Guard the export handler on an empty list.\n\nCloses #7",
       "closingIssuesReferences": [
         {
-          "number": 7
+          "number": 7,
+          "repository": {
+            "name": "export",
+            "owner": {
+              "login": "acme"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "number": 43,
+      "body": "Closes acme/other#7, an issue of another repository with the same number.",
+      "closingIssuesReferences": [
+        {
+          "number": 7,
+          "repository": {
+            "name": "other",
+            "owner": {
+              "login": "acme"
+            }
+          }
         }
       ]
     }
