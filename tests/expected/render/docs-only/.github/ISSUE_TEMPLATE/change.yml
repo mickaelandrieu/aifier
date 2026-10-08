@@ -1,0 +1,32 @@
+name: Change request
+description: A bug, a feature or a refactor, written for two audiences.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is wrong or missing, in plain language. No code.
+    validations: { required: true }
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Who is affected and what it costs them.
+    validations: { required: true }
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable behaviours, one per line, "when X, then Y". Checkable without reading code.
+      value: |
+        - [ ] When ..., then ...
+    validations: { required: true }
+  - type: textarea
+    id: technical
+    attributes:
+      label: Technical analysis (folded, for the builder)
+      description: Affected files, suspected cause, non-binding approach. May be empty at creation.
+      value: |
+        <details><summary>Technical analysis</summary>
+
+        </details>

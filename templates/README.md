@@ -22,9 +22,19 @@ constitution and the area guides; `/context` later audits what is stale or dupli
 ## Placeholders
 
 The keys a template or a skill may use, each with one source in `aifier.yml`: `project`,
-`project_summary`, `repo`, `forge`, `engines`, `language`, `default_branch`, `target_branch`,
-`label_prefix` (no colon, the skills add it), `required_checks`, `ci_file`, `guards`,
-`protected_paths`, `date`, `memory.rules`, `memory.decisions`, `memory.handoff` (paths without a
-trailing slash); inside an `areas` block: `name`, `dir`, `stack`, `path`, `gates.lint`,
-`gates.typecheck`, `gates.test`, `gates.build`; in an area guide: `area.name`, `area.dir`,
-`area.summary`, `area.layout`, `area.commands`, `area.patterns`.
+`project_summary`, `repo`, `forge`, `engines` (a sequence, or one engine name), `language`,
+`default_branch`, `target_branch`, `label_prefix` (no colon, the skills add it),
+`required_checks`, `ci_file`, `guards`, `protected_paths`, `date`, `memory.rules`,
+`memory.decisions`, `memory.handoff` (paths without a trailing slash); inside an `areas` or
+`subareas` block: `name`, `dir` (empty for `root`), `from` ("the root" or "`<dir>/`"), `stack`,
+`guide`, `gates.lint`, `gates.typecheck`, `gates.test`, `gates.build`; inside a
+`protected_paths` block: `path`; in an area guide: `area.name`, `area.dir`, `area.summary`,
+`area.layout`, `area.commands`, `area.patterns`.
+
+The renderer derives two keys from `areas`: `subareas` (the areas minus `root`) and `multi_area`
+(true when there is at least one). A block over a boolean renders its body once when it is true;
+`{{^key}}` … `{{/key}}` renders once when the key is absent, null, false or empty.
+
+A line whose placeholder resolves to `null` or `false` is dropped: in `aifier.yml`, `null` and
+`false` both mean "no gate", and the rendered Gates section then omits that line. Agents say
+which family is missing when they report a Verification Run.

@@ -5,10 +5,17 @@
 //!
 //! Rules, in order of application on a template:
 //! 1. `{{#name}}…{{/name}}` repeats its body per item of `name` (a mapping: one item per key,
-//!    with `dir`, `name` and, for `areas`, the area's `gates`; a sequence: one item per value,
-//!    with `path` and `value`). An unknown or empty `name` renders nothing.
-//! 2. On each line, `{{dotted.key}}` becomes the value; a null value drops the whole line; an
-//!    unknown key is left as is for the engine to fill; a sequence joins with ", ".
+//!    with `dir`, `name` and, for `areas` and `subareas`, the area's `from` and `gates`; a
+//!    sequence: one item per value, with `path` and `value`). A scalar renders the body once when
+//!    it is truthy. `{{^name}}…{{/name}}` renders its body once when `name` is absent, null,
+//!    false or empty. An unknown or empty `name` renders nothing.
+//! 2. On each line, `{{dotted.key}}` becomes the value; a null or false value drops the whole
+//!    line; an unknown key is left as is for the engine to fill; a sequence joins with ", ".
+//!
+//! The configuration is checked before the first write: `engines` (a scalar counts as a
+//! one-element sequence), `areas` (a mapping of mappings), `memory.*` (non-empty paths) and the
+//! `--skills` directory. The renderer derives `subareas` (the areas minus `root`) and
+//! `multi_area` (whether there is any) for the constitution.
 
 use serde_yaml::{Mapping, Value};
 use std::fmt::Write as _;
@@ -80,6 +87,8 @@ const TARGETS: &[(&str, &str)] = &[
 /// Skills that are never substituted in place: they run from the aifier checkout.
 const UNRENDERED_SKILLS: &[&str] = &["assess", "init"];
 
+const AREAS_SHAPE: &str = "areas must be a mapping of <dir>: { guide, stack }";
+
 pub fn run(opts: &Options) -> Result<String, String> {
     let text = fs::read_to_string(&opts.config)
         .map_err(|e| format!("cannot read {}: {e}", opts.config.display()))?;
@@ -95,24 +104,34 @@ pub fn run(opts: &Options) -> Result<String, String> {
     set_default(&mut ctx, "label_prefix", &["labels", "prefix"]);
     set_default(&mut ctx, "required_checks", &["ci", "required_checks"]);
 
+    // Every shape error is raised here, before the first write, so a failure never leaves a
+    // half-rendered tree behind a lost report.
+    let engines = engines(&ctx);
+    let areas = areas(&ctx)?;
+    let rules = memory_path(&ctx, "rules")?;
+    let decisions = memory_path(&ctx, "decisions")?;
+    let handoff = memory_path(&ctx, "handoff")?;
+    if let Some(skills) = &opts.skills {
+        fs::read_dir(skills).map_err(|e| {
+            format!(
+                "--skills {} is not a readable directory: {e}",
+                skills.display()
+            )
+        })?;
+    }
+    add_area_views(&mut ctx, &areas);
+
     let mut written: Vec<String> = Vec::new();
     let mut skipped: Vec<String> = Vec::new();
-    let engines: Vec<String> = match ctx.get("engines") {
-        Some(Value::Sequence(s)) => s.iter().map(scalar_to_string).collect(),
-        _ => Vec::new(),
-    };
 
     for (src, dst) in TARGETS {
         if *src == "CLAUDE.md" && !engines.iter().any(|e| e == "claude-code") {
             continue;
         }
         let dst = dst
-            .replace("{memory.rules}", &memory_path(&ctx, "rules")?)
-            .replace(
-                "{memory.decisions}",
-                memory_path(&ctx, "decisions")?.trim_end_matches('/'),
-            )
-            .replace("{memory.handoff}", &memory_path(&ctx, "handoff")?);
+            .replace("{memory.rules}", &rules)
+            .replace("{memory.decisions}", decisions.trim_end_matches('/'))
+            .replace("{memory.handoff}", &handoff);
         let template = read_template(&opts.templates, src)?;
         emit(
             opts,
@@ -123,7 +142,7 @@ pub fn run(opts: &Options) -> Result<String, String> {
         )?;
     }
 
-    if let Some(Value::Mapping(areas)) = ctx.get("areas").cloned() {
+    if !areas.is_empty() {
         let template = read_template(&opts.templates, "AREA_AGENTS.md")?;
         for (k, area) in &areas {
             let name = scalar_to_string(k);
@@ -133,7 +152,7 @@ pub fn run(opts: &Options) -> Result<String, String> {
             let mut item = ctx.clone();
             let mut area_map = match area {
                 Value::Mapping(m) => m.clone(),
-                _ => return Err(format!("area {name} must be a mapping")),
+                _ => Mapping::new(),
             };
             area_map.insert(key("dir"), Value::String(name.clone()));
             area_map.insert(key("name"), Value::String(name.clone()));
@@ -164,6 +183,47 @@ pub fn run(opts: &Options) -> Result<String, String> {
         }
     }
     Ok(out)
+}
+
+/// `engines`: a sequence, or one scalar read as a one-element sequence.
+fn engines(ctx: &Mapping) -> Vec<String> {
+    match ctx.get("engines") {
+        Some(Value::Sequence(s)) => s.iter().map(scalar_to_string).collect(),
+        Some(v @ (Value::String(_) | Value::Number(_) | Value::Bool(_))) => {
+            vec![scalar_to_string(v)]
+        }
+        _ => Vec::new(),
+    }
+}
+
+/// `areas`: absent is no area; present, it must be a mapping whose values are mappings.
+fn areas(ctx: &Mapping) -> Result<Mapping, String> {
+    let areas = match ctx.get("areas") {
+        None => return Ok(Mapping::new()),
+        Some(Value::Mapping(m)) => m.clone(),
+        Some(_) => return Err(AREAS_SHAPE.into()),
+    };
+    for (k, v) in &areas {
+        if !matches!(v, Value::Mapping(_)) {
+            return Err(format!(
+                "area {} must be a mapping: {AREAS_SHAPE}",
+                scalar_to_string(k)
+            ));
+        }
+    }
+    Ok(areas)
+}
+
+/// `subareas` is `areas` minus `root`; `multi_area` says whether there is any.
+fn add_area_views(ctx: &mut Mapping, areas: &Mapping) {
+    let mut subareas = Mapping::new();
+    for (k, v) in areas {
+        if scalar_to_string(k) != "root" {
+            subareas.insert(k.clone(), v.clone());
+        }
+    }
+    ctx.insert(key("multi_area"), Value::Bool(!subareas.is_empty()));
+    ctx.insert(key("subareas"), Value::Mapping(subareas));
 }
 
 /// The knowledge skills are substituted in place with the gates of the area that owns the most
@@ -259,13 +319,16 @@ fn read_template(dir: &Path, name: &str) -> Result<String, String> {
     fs::read_to_string(&p).map_err(|e| format!("cannot read template {}: {e}", p.display()))
 }
 
+/// `memory.<k>`: a non-empty string, or the rendering stops before writing anything.
 fn memory_path(ctx: &Mapping, k: &str) -> Result<String, String> {
-    match ctx.get("memory") {
-        Some(Value::Mapping(m)) => m
-            .get(k)
-            .map(scalar_to_string)
-            .ok_or_else(|| format!("memory.{k} is missing from the configuration")),
-        _ => Err("memory: is missing from the configuration".into()),
+    let memory = match ctx.get("memory") {
+        Some(Value::Mapping(m)) => m,
+        _ => return Err("memory: is missing from the configuration".into()),
+    };
+    match memory.get(k) {
+        None => Err(format!("memory.{k} is missing from the configuration")),
+        Some(Value::String(s)) if !s.trim().is_empty() => Ok(s.clone()),
+        Some(_) => Err(format!("memory.{k} must be a path")),
     }
 }
 
@@ -297,10 +360,12 @@ fn key(k: &str) -> Value {
     Value::String(k.to_string())
 }
 
+/// `AIFIER_DATE` when set (tests), the local date otherwise.
 fn today() -> String {
-    if let Ok(d) = std::env::var("AIFIER_DATE") {
-        return d;
-    }
+    std::env::var("AIFIER_DATE").unwrap_or_else(|_| local_date())
+}
+
+fn local_date() -> String {
     // Local date, as the Python renderer printed it; libc keeps the binary dependency-free.
     let mut tm: libc::tm = unsafe { std::mem::zeroed() };
     // SAFETY: time(NULL) only returns the clock; localtime_r writes into the tm we own.
@@ -359,14 +424,24 @@ pub fn render_text(text: &str, ctx: &Mapping) -> String {
     lines.join("\n")
 }
 
-/// `{{#name}}` … `{{/name}}`, the first closing tag wins; an opening tag without its closing
-/// tag is left as is. A newline right after the opening tag and right after the closing tag
-/// belongs to the tags, not to the body.
+/// The earliest opening tag, `{{#` (false) or `{{^` (true, inverted).
+fn find_open(s: &str) -> Option<(usize, bool)> {
+    match (s.find("{{#"), s.find("{{^")) {
+        (Some(a), Some(b)) if b < a => Some((b, true)),
+        (Some(a), _) => Some((a, false)),
+        (None, Some(b)) => Some((b, true)),
+        (None, None) => None,
+    }
+}
+
+/// `{{#name}}` … `{{/name}}` and `{{^name}}` … `{{/name}}`, the first closing tag wins; an
+/// opening tag without its closing tag is left as is. A newline right after the opening tag and
+/// right after the closing tag belongs to the tags, not to the body.
 fn render_blocks(text: &str, ctx: &Mapping) -> String {
     let mut out = String::new();
     let mut rest = text;
     loop {
-        let Some(open) = rest.find("{{#") else {
+        let Some((open, inverted)) = find_open(rest) else {
             out.push_str(rest);
             return out;
         };
@@ -397,7 +472,13 @@ fn render_blocks(text: &str, ctx: &Mapping) -> String {
             after += 1;
         }
         out.push_str(&rest[..open]);
-        out.push_str(&render_items(name, body, ctx));
+        if inverted {
+            if !lookup(ctx, name).map(truthy).unwrap_or(false) {
+                out.push_str(&render_text(body, ctx));
+            }
+        } else {
+            out.push_str(&render_items(name, body, ctx));
+        }
         rest = &rest[after..];
     }
 }
@@ -429,7 +510,13 @@ fn render_items(name: &str, body: &str, ctx: &Mapping) -> String {
                 };
                 item.insert(key("dir"), Value::String(dir));
                 item.insert(key("name"), Value::String(k_str.clone()));
-                if name == "areas" {
+                if name == "areas" || name == "subareas" {
+                    let from = if k_str == "root" {
+                        "the root".to_string()
+                    } else {
+                        format!("`{k_str}/`")
+                    };
+                    item.insert(key("from"), Value::String(from));
                     let g = match ctx.get("gates") {
                         Some(Value::Mapping(gm)) => {
                             gm.get(k).cloned().unwrap_or(Value::Mapping(Mapping::new()))
@@ -458,12 +545,17 @@ fn render_items(name: &str, body: &str, ctx: &Mapping) -> String {
                 out.push_str(&render_text(body, &item));
             }
         }
-        _ => {}
+        scalar => {
+            if truthy(scalar) {
+                out.push_str(&render_text(body, ctx));
+            }
+        }
     }
     out
 }
 
-/// One line: every `{{key}}` substituted; `None` when a key resolved to null (the line is dropped).
+/// One line: every `{{key}}` substituted; `None` when a key resolved to null or false (the line
+/// is dropped).
 fn render_line(line: &str, ctx: &Mapping) -> Option<String> {
     let mut out = String::new();
     let mut rest = line;
@@ -475,7 +567,7 @@ fn render_line(line: &str, ctx: &Mapping) -> Option<String> {
                 out.push_str(&rest[..open]);
                 match lookup(ctx, &after[..end]) {
                     None => out.push_str(&rest[open..open + 2 + end + 2]),
-                    Some(Value::Null) => drop = true,
+                    Some(Value::Null) | Some(Value::Bool(false)) => drop = true,
                     Some(v) => out.push_str(&scalar_to_string(v)),
                 }
                 rest = &after[end + 2..];
@@ -515,12 +607,47 @@ mod tests {
         }
     }
 
+    const MEMORY: &str =
+        "memory:\n  rules: docs/learned-rules.md\n  decisions: docs/decisions\n  handoff: docs/handoff.md\n";
+
+    /// Renders `yaml` with the real templates into a fresh scratch tree; returns the report and
+    /// the target directory.
+    fn run_with(name: &str, yaml: &str) -> (Result<String, String>, PathBuf) {
+        let dir = std::env::temp_dir().join(format!("aifier-render-{}-{name}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        let target = dir.join("target");
+        fs::create_dir_all(&target).unwrap();
+        let config = dir.join("aifier.yml");
+        fs::write(&config, yaml).unwrap();
+        let opts = Options {
+            config,
+            templates: PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("templates"),
+            target: target.clone(),
+            force: false,
+            skills: None,
+        };
+        (run(&opts), target)
+    }
+
+    fn entries(dir: &Path) -> usize {
+        fs::read_dir(dir).unwrap().count()
+    }
+
     #[test]
     fn placeholders_null_drops_the_line_and_unknown_stays() {
         let c = ctx("a: x\nb: null\nl: [one, two]\n");
         assert_eq!(
             render_text("{{a}} {{l}}\n{{b}} gone\n{{zz}} kept", &c),
             "x one, two\n{{zz}} kept"
+        );
+    }
+
+    #[test]
+    fn false_gate_drops_the_line() {
+        let c = ctx("gates: { lint: false, test: pytest, build: null }\n");
+        assert_eq!(
+            render_text("{{gates.lint}}\n{{gates.test}}\n{{gates.build}}\nend", &c),
+            "pytest\nend"
         );
     }
 
@@ -535,14 +662,35 @@ mod tests {
     }
 
     #[test]
+    fn areas_give_from_and_subareas_skip_root() {
+        let mut c = ctx("areas:\n  root: { stack: docs }\n  api: { stack: py }\n");
+        let areas = areas(&c).unwrap();
+        add_area_views(&mut c, &areas);
+        let t = "{{#areas}}From {{from}}:\n{{/areas}}{{#multi_area}}table\n{{/multi_area}}{{#subareas}}- {{dir}}\n{{/subareas}}{{^multi_area}}one\n{{/multi_area}}";
+        assert_eq!(
+            render_text(t, &c),
+            "From the root:\nFrom `api/`:\ntable\n- api\n"
+        );
+    }
+
+    #[test]
+    fn single_area_renders_the_inverted_block_only() {
+        let mut c = ctx("areas:\n  root: { stack: docs }\n");
+        let areas = areas(&c).unwrap();
+        add_area_views(&mut c, &areas);
+        let t = "{{#multi_area}}table\n{{/multi_area}}{{#subareas}}- {{dir}}\n{{/subareas}}{{^multi_area}}one\n{{/multi_area}}end";
+        assert_eq!(render_text(t, &c), "one\nend");
+    }
+
+    #[test]
     fn sequence_block_gives_path_and_empty_block_renders_nothing() {
         let c = ctx("p: [a/, b/]\nq: []\n");
         assert_eq!(
             render_text(
-                "{{#p}}- {{path}}\n{{/p}}{{#q}}x{{/q}}{{#none}}y{{/none}}",
+                "{{#p}}- {{path}}\n{{/p}}{{#q}}x{{/q}}{{#none}}y{{/none}}{{^q}}z{{/q}}",
                 &c
             ),
-            "- a/\n- b/\n"
+            "- a/\n- b/\nz"
         );
     }
 
@@ -550,13 +698,42 @@ mod tests {
     fn open_tag_without_close_is_left_as_is() {
         let c = ctx("p: [a]\n");
         assert_eq!(render_text("{{#p}} open", &c), "{{#p}} open");
+        assert_eq!(render_text("{{^p}} open", &c), "{{^p}} open");
+    }
+
+    #[test]
+    fn engines_scalar_renders_claude_md() {
+        let yaml = format!("project: p\nengines: claude-code\nareas:\n  root: {{ guide: AGENTS.md, stack: docs }}\n{MEMORY}");
+        let (report, target) = run_with("engines-scalar", &yaml);
+        let report = report.unwrap();
+        assert!(report.contains("  - CLAUDE.md\n"), "{report}");
+        assert!(target.join("CLAUDE.md").is_file());
+    }
+
+    #[test]
+    fn areas_sequence_is_an_error() {
+        let yaml = format!("project: p\nengines: [claude-code]\nareas: [api, web]\n{MEMORY}");
+        let (report, target) = run_with("areas-sequence", &yaml);
+        assert_eq!(report.unwrap_err(), AREAS_SHAPE);
+        assert_eq!(entries(&target), 0, "nothing is written before the check");
+    }
+
+    #[test]
+    fn memory_null_is_an_error() {
+        let yaml = "project: p\nengines: [claude-code]\nareas:\n  root: { guide: AGENTS.md, stack: docs }\nmemory:\n  rules: null\n  decisions: docs/decisions\n  handoff: docs/handoff.md\n";
+        let (report, target) = run_with("memory-null", yaml);
+        assert_eq!(report.unwrap_err(), "memory.rules must be a path");
+        assert_eq!(entries(&target), 0, "nothing is written before the check");
+        let yaml = "project: p\nareas: {}\nmemory:\n  rules: docs/learned-rules.md\n  decisions: \"\"\n  handoff: docs/handoff.md\n";
+        let (report, _) = run_with("memory-empty", yaml);
+        assert_eq!(report.unwrap_err(), "memory.decisions must be a path");
     }
 
     #[test]
     fn date_is_iso() {
-        std::env::remove_var("AIFIER_DATE");
-        let d = today();
+        let d = local_date();
         assert_eq!(d.len(), 10);
         assert_eq!(&d[4..5], "-");
+        assert_eq!(&d[7..8], "-");
     }
 }

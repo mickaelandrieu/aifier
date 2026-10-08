@@ -38,4 +38,8 @@ binary runs at setup, never in the daily life of a project (arbitration of 2026-
 - CI formats, lints (`clippy -D warnings`), tests and builds the crate before the golden tests.
 - `serde_yaml` is pinned and unmaintained; only the subset `init` renders is read, and the
   parser can be swapped without touching the templates contract.
+- The configuration is read as YAML, not as text: an unquoted number is a number (`1.10` is
+  rendered `1.1`), a quoted key is its string, a duplicate key is rejected, and a ` # ` inside
+  quotes is kept. The collectors quote what they write, so a value survives the round trip; a
+  hand-edited `aifier.yml` follows the same rule.
 - `update` and `remove` come as later subcommands under the same release policy.
