@@ -1,13 +1,10 @@
-# two-stacks — guidance for AI agents
+# docs-only — guidance for AI agents
 
 {{project_summary}}
 
 This file is a map; the rules of each area live in its guide.
 
-| Area | Directory | Read first |
-|---|---|---|
-| python-fastapi | `api/` | [api/AGENTS.md](api/AGENTS.md) |
-| node | `web/` | [web/AGENTS.md](web/AGENTS.md) |
+One area, the repository root.
 
 Memory: [learned rules](docs/learned-rules.md) (read before building or reviewing),
 [decisions](docs/decisions) (ADRs), [session handoff](docs/handoff.md) (read at session
@@ -32,19 +29,8 @@ start, update before stopping). Configuration of the cycle: [aifier.yml](aifier.
 
 ## Gates
 
-From `api/`:
+From the root:
 
 ```bash
-ruff check . && ruff format --check .
-mypy .
-pytest
-```
-
-From `web/`:
-
-```bash
-npm run lint
-npm run typecheck
-npm run build
 ```
 

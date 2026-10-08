@@ -4,9 +4,7 @@
 
 This file is a map; the rules of each area live in its guide.
 
-| Area | Directory | Read first |
-|---|---|---|
-| docs | `/` | [/AGENTS.md](/AGENTS.md) |
+One area, the repository root.
 
 Memory: [learned rules](docs/learned-rules.md) (read before building or reviewing),
 [decisions](docs/decisions) (ADRs), [session handoff](docs/handoff.md) (read at session
@@ -16,13 +14,10 @@ start, update before stopping). Configuration of the cycle: [aifier.yml](aifier.
 
 1. Match the surrounding code: naming, structure, idioms. Leave it better, stay in scope.
 2. Tests are part of the change. A fix or a feature lands with the tests that prove it.
-3. No claim without proof. Every deliverable ends with a `## Verification Run` section quoting
-   the gate commands and their captured output, or `BLOCKED` with the reason. Never write "tests
-   pass" from memory.
-4. Never skip the gates. Hook-bypass flags are not available to agents.
+3. No claim without proof: see the `verification-evidence` skill.
+4. Never skip the gates. Never pass `--no-verify` or any flag that skips a hook or a check.
 5. Secrets come from the environment only. Never put keys or passwords in code, docs or logs.
-6. Branch from `main`, one slice per pull request, conventional commit subjects
-   (`type(scope): description`), the pull request references its issue.
+6. Branch from `main`, one slice per pull request: see `process-rules` PR-001 and PR-002.
 
 ## What agents do not do
 
@@ -36,9 +31,7 @@ start, update before stopping). Configuration of the cycle: [aifier.yml](aifier.
 
 ## Gates
 
-Lines whose gate is `null` in `aifier.yml` are omitted; say which family is missing.
-
-From `/`:
+From the root:
 
 ```bash
 cargo fmt --check && cargo clippy --all-targets -- -D warnings

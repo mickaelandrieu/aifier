@@ -56,15 +56,17 @@ for name in gates-runner gates-runner-api; do
   if [ "${UPDATE:-}" = 1 ]; then cp "$work/$name.txt" "$expected"; continue; fi
   if ! diff -u "$expected" "$work/$name.txt"; then echo "tests: $name differs"; fail=1; fi
 done
-# the renderer: the binary renders two configurations into empty trees and two skills in place;
-# AIFIER_DATE pins the date; the expected trees were captured identical to the Python renderer's
+# the renderer: the binary renders three configurations into empty trees and two skills in place;
+# AIFIER_DATE pins the date; tests/fixtures/aifier.yml is a frozen copy of this repository's
+# configuration (single root area, gates set), docs-only a single root area with no gate
 bin="${AIFIER_BIN:-}"
 for c in target/release/aifier target/debug/aifier; do [ -z "$bin" ] && [ -x "$c" ] && bin="$c"; done
 [ -n "$bin" ] || { echo "tests: BLOCKED, build the binary first (cargo build --release) or set AIFIER_BIN"; exit 1; }
 case "$bin" in /*) ;; *) bin="$PWD/$bin";; esac   # absolute: the installer cases run from other directories
 cp tests/expected/two-stacks.detect.yml "$work/render-two-stacks.yml"   # the draft detect.sh produces, as init confirms it
-cp aifier.yml "$work/render-aifier.yml"
-for case in two-stacks aifier; do
+cp tests/expected/docs-only.detect.yml "$work/render-docs-only.yml"
+cp tests/fixtures/aifier.yml "$work/render-aifier.yml"
+for case in two-stacks aifier docs-only; do
   out="$work/render/$case"; mkdir -p "$out/skills"
   cp -R skills/build skills/verification-evidence "$out/skills/"
   AIFIER_DATE=DATE "$bin" render "$work/render-$case.yml" templates "$out" --skills "$out/skills" | sed "s#$out/#OUT/#g" > "$out/render.out"
