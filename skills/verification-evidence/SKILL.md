@@ -50,10 +50,10 @@ Example:
 
 ```
 ## Verification Run
-$ {{gates.lint}}        → All checks passed
-$ {{gates.typecheck}}   → Success: no issues found in 212 files
-$ {{gates.test}} tests/unit/orders -q   → 48 passed in 2.3s
-$ {{gates.build}}       → built in 14.1s, 0 warnings
+$ {{gates.lint}}        → exit 0, last line: "lint: OK"
+$ {{gates.typecheck}}   → exit 0, last line: "no issues found"
+$ {{gates.test}}        → exit 0, last line: "tests: OK"
+$ {{gates.build}}       → exit 0, last line: "build finished, 0 warnings"
 Integration tests: BLOCKED — database unreachable (DB_HOST unset). Must run in CI before merge.
 ```
 

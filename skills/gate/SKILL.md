@@ -8,11 +8,11 @@ You are running `gate`. It is cheap and read-only: run the script, show its line
 you did not read.
 
 ```bash
-bash "<directory of this SKILL.md>/gate.sh" N --repo {{repo}} --prefix {{label_prefix}}
+bash "<directory of this SKILL.md>/gate.sh" $ARGUMENTS --repo {{repo}} --prefix {{label_prefix}}
 ```
 
-`N` is the issue number or its URL, passed as given: the script takes the number from the URL
-(without its fragment, query or trailing slash). No argument: ask for one and stop. The script
+`$ARGUMENTS` is the issue number or its URL, passed verbatim, as the cycle skills do: the script
+takes the number from the URL (without its fragment, query or trailing slash). No argument: ask for one and stop. The script
 needs `gh`, `jq` and a repository (`--repo`, or `repo:` in `aifier.yml`) and checks them itself;
 when it exits non-zero it has printed `BLOCKED: <reason>`: repeat that line and stop. When the
 script cannot be started at all, print `BLOCKED: gate.sh could not run (<reason>)` and stop.

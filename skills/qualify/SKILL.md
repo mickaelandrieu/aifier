@@ -34,8 +34,7 @@ the states.
    `{{label_prefix}}:partial`, `{{label_prefix}}:needs-input` is missing, print
    `BLOCKED: workflow labels missing` followed by one line per missing label,
    `gh label create "{{label_prefix}}:<state>" --repo {{repo}}`, and stop.
-4. Fetch the issue: `gh issue view N --repo {{repo}} --json title,body,labels,comments,author`
-   (GitLab: `glab issue view N`).
+4. Fetch the issue: `gh issue view N --repo {{repo}} --json title,body,labels,comments,author`.
 5. Read what grounds the technical part: the constitution, the area guide of each directory the
    issue mentions, the catalogue, the titles of the files in `{{memory.decisions}}`, and the files
    the issue names. Cite nothing you did not open.

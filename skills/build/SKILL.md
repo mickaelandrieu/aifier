@@ -69,7 +69,8 @@ gh issue edit N --repo {{repo}} --add-label {{label_prefix}}:in-progress --remov
 `<type>`: `fix` when the issue is labelled `bug` or describes a defect, `feat` for an
 `enhancement` or new behaviour, `refactor` or `chore` when the chosen approach says so. One
 branch per slice; the slice is the first one the plan names (the issue title when the plan has a
-single unnamed slice). `--remove-label` on an absent label is harmless.
+single unnamed slice). `--remove-label` on an absent label is harmless. The label, the push and
+the pull request are the expected writes of this skill; it asks nothing before them.
 
 ## Step 3 — Build the slice
 

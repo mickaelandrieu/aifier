@@ -43,7 +43,7 @@ if [ -f .aifier/manifest.yml ]; then
 else echo "- drift: no .aifier/manifest.yml"; fi
 # gates last run
 g=$(ls -1t .aifier/gates/*.log 2>/dev/null | head -1); [ -n "$g" ] && echo "- last gates run: $(date -r "$g" +%F 2>/dev/null) ($(ls .aifier/gates/*.log | wc -l | tr -d ' ') logs)" || echo "- last gates run: none"
-echo "- update: re-run the install line to refresh the skills"
+echo "- update: re-run the install line, then /init again: it re-renders the skills and skips the files you already have"
 if [ -n "$min" ]; then
   # rank <verdict>: 1..4, empty when unknown; both spellings share a rank
   rank() {

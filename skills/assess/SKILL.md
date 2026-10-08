@@ -5,8 +5,13 @@ description: Read-only maturity audit of a repository against the eleven phases 
 
 You are running `assess`. You audit the repository at `$ARGUMENTS` (default: the current directory)
 and produce a maturity report. You are self-contained: do not delegate to sub-agents. You are
-**read-only**: never write into the audited repository, never run its build, tests or scripts, never
-change its labels, issues or pull requests. Only `git` reads, `gh`/`glab` reads and file reads.
+**read-only** except for one file: `assess` writes exactly `.aifier/assess-<date>.md` in the
+audited repository, the report `status` reads, and nothing else; the person commits it or not,
+their choice. Never run the repository's build, tests or scripts, never change its labels, issues
+or pull requests. Only `git` reads, `gh` reads and file reads.
+
+Names used below: `$REPO` is `$ARGUMENTS` (default `.`), `$OUT` a directory outside the
+repository where the working files of this run go (`mktemp -d` is fine).
 
 The report is only as good as its evidence. Every score cites what you read or ran. A score without
 a cited proof is not a score: leave the criterion **unrated** and say why.
@@ -22,7 +27,7 @@ SLUG=$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null)
 DEFAULT=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null)
 ```
 
-Record the sources: `git` (always) and `forge` (when `gh` or `glab` answers). Without the forge,
+Record the sources: `git` (always) and `forge` (when `gh` answers). Without the forge,
 a criterion whose levels 0 to 2 are visible in the repository (a template, a written rule) is
 rated from the repository and capped at 2; a criterion whose every level needs the forge (branch
 protection, reviews, samples of issues) is **unrated**, never 0. Without a PR sample, the merge
@@ -75,8 +80,7 @@ gh search issues --repo "$SLUG" "Implementation plan" OR "Chosen approach" OR "A
 ```
 
 Do not run `gh run list`: it hangs on repositories whose CI is not GitHub Actions. Check runs from
-any CI provider appear in `statusCheckRollup`. `$OUT` is a directory **outside** the audited
-repository.
+any CI provider appear in `statusCheckRollup`.
 
 Git samples the collector does not cover:
 
@@ -143,8 +147,8 @@ axis: **H** harnessability, **C** context, **W** workflow, **G** verification ga
 - **0.4 Agent engines detected** (informative, not scored). Engine directories found; tracked or ignored; generic or project-specific content; stale working copies.
 - **0.5 Code harnessability** (H). Strict typing configured (`tsconfig` `"strict": true`, `mypy`/`pyright` section, typed language), linter and formatter configured, module boundaries (workspaces, packages). 3 when typing runs in CI (check run visible).
 - **0.6 Environment bootstrap** (H). `Makefile`, `justfile`, `scripts/`, `.env.example`, devcontainer, README install section. 3 when the CI invokes the same script or target, including inside a container image.
-- **0.8 No secret in the repository** (blocking, H). Tracked files hold no API key, password, token or session secret; `.env*` ignored; a secret scanner configured. 0 when a real secret is tracked; 1 when demo values sit hard-coded in configuration (compose, CI) with no scanner; 2 when nothing is tracked and `.env.example` carries names only; 3 with a scanner blocking in CI or a hook. The probes print candidate lines: read each before calling it a secret.
 - **0.7 Delegation scope** (W). A written statement of what agents do not do: merge, decide intent, pick architecture, touch safety-critical zones. 3 when agent instructions explicitly stop at the gates.
+- **0.8 No secret in the repository** (blocking, H). Tracked files hold no API key, password, token or session secret; `.env*` ignored; a secret scanner configured. 0 when a real secret is tracked; 1 when demo values sit hard-coded in configuration (compose, CI) with no scanner; 2 when nothing is tracked and `.env.example` carries names only; 3 with a scanner blocking in CI or a hook. The probes print candidate lines: read each before calling it a secret.
 
 ### Phase 1 · Define (human gate: intent)
 
@@ -152,7 +156,7 @@ axis: **H** harnessability, **C** context, **W** workflow, **G** verification ga
 - **1.2 Two audiences** (W). Business-readable top (problem, impact, observable criteria), technical analysis folded below. 3 when the sample respects it.
 - **1.3 Observable acceptance criteria** (W). "When X, then Y", checkable without reading code. 3 when present in 70 % or more of sampled closed issues.
 - **1.4 Tooled qualification** (W). A command or skill that rewrites a raw issue into the contract, and a workflow state (label) for "qualified". 3 when the state appears on recent issues.
-- **1.5 Human stop on intent** (W). The qualified issue waits for human validation before plan or build. 3 when a label materialises the wait and automation does not pick up issues that have not passed it.
+- **1.5 Human stop on intent** (W). The qualified issue waits for human validation before plan or build: after `qualify` the issue stays in the state `proposed` until its author replies `contract: ok` (a comment, like `approach: <letter>` for the architecture gate). 2 when the stop is written in the instructions; 3 when the `contract: ok` replies are visible on recent issues and automation does not pick up issues that have not passed it.
 
 ### Phase 2 · Plan (human gate: architecture)
 
@@ -246,8 +250,10 @@ Verdict, from phases, not from the overall mean:
 phases 0 to 2; then phases 4 and 5; then the rest. For each gap: the missing proof, a realistic
 target (usually 2), and what closes it: `init` (constitution, labels, templates, skills, catalogue),
 `gates` (gate detection, CI parity, preflight, proof discipline), `context` (stale or duplicated
-context), `compound` (rule capture), or a human action when no command applies (branch protection,
-observability, release process).
+context), `compound` (rule capture, 6.2 and 9.2), the cycle skill that provides the practice for
+the workflow criteria (`qualify` for 1.4 and 1.5, `plan` for 2.2 and 2.3, `build` for 3.4 and
+3.6), or a human action when no command applies (branch protection, observability, release
+process).
 
 **Risks**: findings that do not lower a score below 2 but undermine several criteria at once. Always
 report: a merge-receiving branch without protection; required checks whose names match nothing
@@ -257,10 +263,9 @@ agent; coverage configured but never run. Risks go in their own section, before 
 ## Step 4 — Report
 
 Write the report in the language of the repository's README (default English). Samples may be in
-another language: make your regexes cover both. Write to standard output and, if the caller gave an
-output path, to that file **outside** the audited repository; also write a copy to
-`.aifier/assess-<date>.md` inside the repository so that `status` can read it (it is the one
-file `assess` writes there; the person decides whether to commit it). Format:
+another language: make your regexes cover both. Write it to `.aifier/assess-<date>.md` inside the
+repository, the one file `assess` writes there, so that `status` can read it; the person decides
+whether to commit it. Print it to standard output as well. Format:
 
 ```
 # assess · <repo> · <date>
@@ -304,7 +309,8 @@ Rules for the report:
 
 ## Important rules
 
-- Read-only. No write, no label change, no comment, no build, no test run in the audited repository.
+- Read-only except `.aifier/assess-<date>.md`. No other write, no label change, no comment, no
+  build, no test run in the audited repository.
 - No sub-agents. Do the reading yourself.
 - The 90-day rule caps at 2; it never lowers a score to 1 or 0.
 - A blocking criterion at 0 caps the phase at 1 even if every other criterion is 3.

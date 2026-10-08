@@ -67,7 +67,7 @@ Slices: <one PR | N PRs, each named, each independently shippable>
 Honours: RULE-NNN, RULE-MMM, ADR NNNN
 Trade-offs: + <gain> / − <cost>
 Risk: <what breaks if the assumption is wrong, and how it would be noticed>
-Proof: per criterion: "{{gates.test}} <scope>", "new test: <what it asserts>", or "manual: <steps>" when no gate can exercise it
+Proof: per criterion: `{{gates.test}}` (name the scope in words), `new test: <what it asserts>`, or `manual: <steps>` when no gate can exercise it
 Effort: S | M | L  (relative to the other approaches, no hours)
 ```
 

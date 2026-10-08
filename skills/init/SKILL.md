@@ -43,20 +43,34 @@ Templates live in `templates/` next to this file. The rendering is deterministic
 renderer, the `aifier` binary the installer put under `.aifier/bin/`, then fill only what it
 leaves for you.
 
+First, copy the knowledge skills that agents load, from the skills directory this skill was
+installed in, into the project's skills directory when they are not already there (the installer
+puts both in the same directory, `.agents/skills` by default, so this is often a no-op): the cycle
+skills `gate`, `qualify`, `plan`, `build` (the three call `gate/gate.sh` by its path next to them,
+so `gate` travels with them), and the knowledge skills `verification-evidence`,
+`review-checklist`, `adversarial-test-plan`, `decision-record`, `compound`, `process-rules`,
+`documentation-rules`. That directory is the `--skills` argument below: the renderer substitutes
+their `{{ }}` placeholders in place with the values of `aifier.yml` (for the per-area gates it
+uses the area that owns the most gates, the backend in a backend-plus-frontend repository, and
+says so in the skill's first line; it strips the `<!-- placeholders: … -->` comment once
+substituted; `{{label_prefix}}` carries no colon, the skills add it). For Claude Code, make sure
+`.claude/skills` exists or points to that directory; for opencode and pi the `.agents/skills`
+directory is read as is.
+
 ```bash
 .aifier/bin/aifier render aifier.yml "<directory of this SKILL.md>/templates" . --skills "<project skills dir>"
 ```
 
 When `.aifier/bin/aifier` is missing, stop with `BLOCKED: aifier binary missing; run
-AIFIER_REF=<tag> sh install.sh (see the releases page), or build it with cargo build --release
-and copy target/release/aifier to .aifier/bin/`. There is no by-hand rendering: one renderer,
-one result (ADR 0002).
+curl -fsSL https://raw.githubusercontent.com/mickaelandrieu/aifier/main/install.sh | sh (it
+picks the latest release; AIFIER_REF=<tag> pins one), or build it with cargo build --release and
+copy target/release/aifier to .aifier/bin/`. There is no by-hand rendering: one renderer, one
+result (ADR 0002).
 
 It writes every target below, skips a file that already exists (so the merge, side-file and skip
 choices of Step 2 are honoured by renaming or removing before, never by `--force` on a file the
-person did not mark merge), drops the lines whose gate is `null`, substitutes the knowledge
-skills in place with the gates of the area that owns the most of them, and prints what it wrote.
-Then open each
+person did not mark merge), drops the lines whose gate is `null`, renders the skills of
+`--skills` in place, and prints what it wrote. Then open each
 written file and fill the placeholders it left: `{{project_summary}}` (two sentences from the
 README and the manifests) and, in each area guide, `{{area.summary}}`, `{{area.layout}}`,
 `{{area.commands}}`, `{{area.patterns}}` from what the repository already documents. When the
@@ -71,23 +85,14 @@ not read. The target table, for the record:
 | `AGENTS.md` | `AGENTS.md` | the constitution; `{{project_summary}}` is two sentences you write from the README and the manifests, nothing more |
 | `AREA_AGENTS.md` | `<area>/AGENTS.md` | one per area; fill layout, commands and patterns from what the repository already documents (README, existing context file, manifests). when the person chose **merge** for an existing context file, move its area-specific content here and the general part into the constitution, drop what contradicts the constitution's rules and list it in the manifest; cite nothing you did not read |
 | `CLAUDE.md` | `CLAUDE.md` | only when `claude-code` is among the engines and the file does not exist, or the person chose merge |
-| `github/ISSUE_TEMPLATE_change.yml` | `.github/ISSUE_TEMPLATE/change.yml` | GitHub only; for GitLab render the same fields as `.gitlab/issue_templates/change.md` |
-| `github/PULL_REQUEST_TEMPLATE.md` | `.github/PULL_REQUEST_TEMPLATE.md` | GitLab: `.gitlab/merge_request_templates/default.md` |
+| `github/ISSUE_TEMPLATE_change.yml` | `.github/ISSUE_TEMPLATE/change.yml` | two-audience issue |
+| `github/PULL_REQUEST_TEMPLATE.md` | `.github/PULL_REQUEST_TEMPLATE.md` | PR with a Verification Run section |
 | `memory/learned-rules.md` | `{{memory.rules}}` | empty catalogue with the format |
 | `memory/decisions-README.md`, `memory/0000-template.md` | `{{memory.decisions}}/` | |
 | `memory/handoff.md` | `{{memory.handoff}}` | dated today |
 
-Then copy the knowledge skills that agents load, from the skills directory this skill was installed
-in, into the project's skills directory when they are not already there: the cycle skills
-`gate`, `qualify`, `plan`, `build` (the three call `gate/gate.sh` by its path next to them, so
-`gate` travels with them), and the knowledge skills `verification-evidence`,
-`review-checklist`, `adversarial-test-plan`, `decision-record`, `compound`, `process-rules`,
-`documentation-rules`. Replace their `{{ }}` placeholders with the values of `aifier.yml`: for the per-area gates use
-the area that owns the most gates (the backend in a backend-plus-frontend repository) and say
-so in the skill's first line; strip the `<!-- placeholders: … -->` comment once substituted;
-`{{label_prefix}}` carries no colon, the skills add it. For
-Claude Code, make sure `.claude/skills` exists or points to that directory; for opencode and pi
-the `.agents/skills` directory is read as is.
+GitLab: the forge templates are rendered under `.github/` only and the cycle skills need `gh`;
+both are GitHub-only in this release, say so in the report when `forge` is not `github`.
 
 Never overwrite a file the person did not mark **merge**. Never delete anything. Never render a
 file whose template you did not read.
@@ -96,8 +101,8 @@ file whose template you did not read.
 
 Write `.aifier/manifest.yml` with these keys: `ref` (from `.aifier/install.yml`), `date`,
 `rendered` (list of paths), `skipped` (list of `path: reason`), `not_rendered` (list of
-`item: reason`, at least `guards: not available in V1` and `labels: not created, command printed`),
-`answers` (the confirmed questions).
+`item: reason`, at least `guards: not available yet` and `labels: not created, command printed`
+or `labels: created on <date>`), `answers` (the confirmed questions).
 
 Show the forge commands below, filled from `aifier.yml`, and ask the person once: "run them
 now?". Run exactly the ones the person approves, and record the answer in the manifest. Never run
@@ -116,13 +121,20 @@ gh api -X PUT "repos/{{repo}}/branches/{{target_branch}}/protection" --input - <
 JSON
 ```
 
-For GitLab print the `glab label create` and `glab api` equivalents. Say that protection on a
-branch people push to directly will reject those pushes from then on: it is the gate, not a bug.
+Say that protection on a branch people push to directly will reject those pushes from then on:
+it is the gate, not a bug.
 
-Report in ten lines: the files rendered, the questions answered, the gaps `init` closed
-(constitution, area guides, templates, memory, skills) and the ones it cannot close (branch
-protection, CI gates, labels on the forge), each with the command or human action that closes it.
-Do not commit; the person reviews the diff and commits on a branch.
+Report, in the chat; do not commit, the person reviews the diff and commits on a branch:
+
+```
+## Init — <date>
+Rendered: <the files, as the renderer printed them>
+Skipped: <path: reason | none>
+Answered: <the questions of Step 2 and their answers>
+Closed: <constitution, area guides, templates, memory, skills, as applicable>
+Not closed: <branch protection, CI gates, labels on the forge: each with the command or the human action>
+Stopped at: done | BLOCKED (<reason>)
+```
 
 ## What `init` does not do
 

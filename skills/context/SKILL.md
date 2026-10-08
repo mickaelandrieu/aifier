@@ -60,5 +60,20 @@ repository) with:
 5. what to delete, with the reason.
 
 The person reads the proposal and decides. `init` applies a split when the person chooses merge;
-otherwise the person edits by hand. Say in five lines: the load before and after, the number of
-stale claims, the number of duplications, and the first thing to fix.
+otherwise the person edits by hand.
+
+Proof: the report quotes every file read with its line count (`wc -l`), and every stale claim
+with the check that failed. Say `BLOCKED: <reason>` when `$OUT` cannot be written or when none
+of the files of Step 1 exists: there is nothing to audit, not a clean result.
+
+## Report
+
+```
+## Context — <date>
+Load per session: <lines> before → <lines> after   (files: <name> <lines>, …)
+Stale claims: <count> (<file:line>: <what the repository says instead>, …)
+Duplications: <count> (<content>: kept in <file>, …)
+Split: <file> (<lines>) → <targets> | none needed
+First fix: <one line>
+Proposal: $OUT/context-proposal.md | BLOCKED (<reason>)
+```

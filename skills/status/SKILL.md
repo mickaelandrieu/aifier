@@ -24,4 +24,8 @@ In CI: `bash status.sh --min "Tooled cycle"` exits 3 when the last verdict is be
 minimum, so a team can protect its own setup. Verdicts, in order: Not ready, Ready for Setup,
 Tooled cycle, Governed cycle.
 
+Proof: the report is the script's output, quoted verbatim, nothing summarised in its place. Say
+`BLOCKED: <reason>` when the script cannot start, and "run assess" when it reports no assess
+report: neither is a verdict.
+
 Not covered yet: detecting that a newer aifier exists; the script only prints the install line.

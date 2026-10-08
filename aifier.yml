@@ -15,11 +15,11 @@ areas:
   root: { guide: AGENTS.md, stack: docs }
 gates:
   root:
-    lint: "cargo fmt --check && cargo clippy --all-targets -- -D warnings"
-    typecheck: null
-    test: "AIFIER_SRC=. AIFIER_DIR=skills sh install.sh && bash skills/init/detect.sh . >/dev/null && bash skills/assess/probes.sh . >/dev/null && bash tests/run.sh"
-    build: null
-preflight: ["test -f Cargo.toml", "command -v cargo"]
+    lint: "cargo fmt --check && cargo clippy --all-targets -- -D warnings && bash tests/lint.sh"
+    typecheck: "cargo test"
+    test: "AIFIER_SRC=. AIFIER_REF=main AIFIER_DIR=skills sh install.sh && bash skills/init/detect.sh . >/dev/null && bash skills/assess/probes.sh . >/dev/null && bash tests/run.sh"
+    build: "cargo build --release"
+preflight: ["test -f Cargo.toml", "command -v cargo", "command -v jq"]
 ci:
   file: .github/workflows/check.yml
   required_checks: [check]
