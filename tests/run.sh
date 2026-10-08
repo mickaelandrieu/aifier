@@ -61,6 +61,7 @@ done
 bin="${AIFIER_BIN:-}"
 for c in target/release/aifier target/debug/aifier; do [ -z "$bin" ] && [ -x "$c" ] && bin="$c"; done
 [ -n "$bin" ] || { echo "tests: BLOCKED, build the binary first (cargo build --release) or set AIFIER_BIN"; exit 1; }
+case "$bin" in /*) ;; *) bin="$PWD/$bin";; esac   # absolute: the installer cases run from other directories
 cp tests/expected/two-stacks.detect.yml "$work/render-two-stacks.yml"   # the draft detect.sh produces, as init confirms it
 cp aifier.yml "$work/render-aifier.yml"
 for case in two-stacks aifier; do
@@ -72,28 +73,51 @@ for case in two-stacks aifier; do
   if [ "${UPDATE:-}" = 1 ]; then rm -rf "${expected:?}"; mkdir -p tests/expected/render; cp -R "$out" "$expected"; continue; fi
   if ! diff -r "$expected" "$out"; then echo "tests: render $case differs"; fail=1; fi
 done
-# the installer, offline: from a local checkout into a fixture repository (binary copied from
-# target/release), then from a fake release served over file:// (checksum verified), then a
-# tampered release (must refuse). The skills archive is never downloaded: AIFIER_SRC points here.
+# the installer, offline: from a local checkout into a fixture repository (the built binary named
+# by AIFIER_BIN is copied, wherever cargo put it), from a relative AIFIER_SRC in a subdirectory,
+# with a release URL but a branch ref (falls back to the local build), then from a fake release
+# served over file:// (checksum verified), a re-run that keeps the fetched binary, a tampered
+# release (must refuse), and an absolute AIFIER_DIR (the .claude/skills link must resolve). The
+# skills archive is never downloaded (AIFIER_SRC points here) and AIFIER_REF is always set, so
+# the installer never queries the latest release.
 here="$(pwd)"
 inst="$root/docs-only"
-( cd "$inst" && AIFIER_SRC="$here" sh "$here/install.sh" ) > "$work/install-local.out" 2>&1 || { echo "tests: install from local checkout failed"; cat "$work/install-local.out"; fail=1; }
+install_case() {  # <name> <expected exit> <dir> <env...>: runs the installer there, captures its output
+  name="$1"; want="$2"; dir="$3"; shift 3
+  ( cd "$dir" && env "$@" sh "$here/install.sh" ) > "$work/install-$name.out" 2>&1; got=$?
+  [ "$got" = "$want" ] || { echo "tests: install $name exited $got, expected $want"; cat "$work/install-$name.out"; fail=1; }
+}
+install_case local 0 "$inst" AIFIER_SRC="$here" AIFIER_REF=main AIFIER_BIN="$bin"
 [ -x "$inst/.aifier/bin/aifier" ] && "$inst/.aifier/bin/aifier" --version | grep -q '^aifier ' || { echo "tests: installer did not copy the binary"; fail=1; }
 grep -q '^binary: .aifier/bin/aifier (copied from' "$inst/.aifier/install.yml" || { echo "tests: install.yml lacks the binary line"; fail=1; }
+# a relative AIFIER_SRC is resolved from where the caller stands, not from the toplevel
+ln -s "$here" "$work/checkout"; mkdir -p "$inst/sub"
+install_case relative-src 0 "$inst/sub" AIFIER_SRC="../../../checkout" AIFIER_REF=main AIFIER_BIN="$bin"
+grep -q '^aifier: using local source /' "$work/install-relative-src.out" || { echo "tests: relative AIFIER_SRC was not resolved"; cat "$work/install-relative-src.out"; fail=1; }
+rm -rf "$inst/sub"
 rel="$work/release"; mkdir -p "$rel"
 arch="$(uname -m)"; case "$arch" in x86_64|amd64) arch=x86_64;; arm64|aarch64) arch=aarch64;; esac
 case "$(uname -s)" in Linux) tgt="$arch-unknown-linux-musl";; Darwin) tgt="$arch-apple-darwin";; *) tgt="unknown";; esac
 tar -C "$(dirname "$bin")" -czf "$rel/aifier-v0.0.0-$tgt.tar.gz" aifier
 ( cd "$rel" && (sha256sum aifier-*.tar.gz 2>/dev/null || shasum -a 256 aifier-*.tar.gz) > SHA256SUMS )
+# a release URL without a tag ref cannot name an asset: the local build is copied instead
 rm -rf "${inst:?}/.aifier/bin"
-( cd "$inst" && AIFIER_SRC="$here" AIFIER_REF=v0.0.0 AIFIER_RELEASE_URL="file://$rel" sh "$here/install.sh" ) > "$work/install-release.out" 2>&1 || { echo "tests: install from a release failed"; cat "$work/install-release.out"; fail=1; }
+install_case release-url-branch 0 "$inst" AIFIER_SRC="$here" AIFIER_REF=main AIFIER_BIN="$bin" AIFIER_RELEASE_URL="file://$rel"
+grep -q '^binary: .aifier/bin/aifier (copied from' "$inst/.aifier/install.yml" || { echo "tests: release URL with a branch ref did not copy the local binary"; cat "$work/install-release-url-branch.out"; fail=1; }
+rm -rf "${inst:?}/.aifier/bin"
+install_case release 0 "$inst" AIFIER_SRC="$here" AIFIER_REF=v0.0.0 AIFIER_RELEASE_URL="file://$rel"
 grep -q 'sha256 verified' "$inst/.aifier/install.yml" || { echo "tests: release install did not verify the checksum"; fail=1; }
+# a re-run that fetches nothing keeps the binary of the previous install, and says so
+install_case rerun-kept 0 "$inst" AIFIER_SRC="$here" AIFIER_REF=main AIFIER_BIN="$work/no-such-binary"
+grep -q '^binary: .aifier/bin/aifier (kept from a previous install)' "$inst/.aifier/install.yml" || { echo "tests: re-run did not keep the previous binary"; cat "$work/install-rerun-kept.out"; fail=1; }
+[ -x "$inst/.aifier/bin/aifier" ] || { echo "tests: re-run removed the previous binary"; fail=1; }
 printf 'tampered' >> "$rel/aifier-v0.0.0-$tgt.tar.gz"
-if ( cd "$inst" && AIFIER_SRC="$here" AIFIER_REF=v0.0.0 AIFIER_RELEASE_URL="file://$rel" sh "$here/install.sh" ) > "$work/install-tampered.out" 2>&1; then
-  echo "tests: installer accepted a tampered binary"; fail=1
-else
-  grep -q 'checksum mismatch' "$work/install-tampered.out" || { echo "tests: tampered install failed for another reason"; cat "$work/install-tampered.out"; fail=1; }
-fi
+install_case tampered 1 "$inst" AIFIER_SRC="$here" AIFIER_REF=v0.0.0 AIFIER_RELEASE_URL="file://$rel"
+grep -q 'checksum mismatch' "$work/install-tampered.out" || { echo "tests: tampered install failed for another reason"; cat "$work/install-tampered.out"; fail=1; }
+# an absolute AIFIER_DIR: the .claude/skills link must point at it, not at ../<absolute path>
+inst2="$root/dormant"
+install_case absolute-dir 0 "$inst2" AIFIER_SRC="$here" AIFIER_REF=main AIFIER_BIN="$bin" AIFIER_DIR="$inst2/vendor/skills"
+[ -f "$inst2/.claude/skills/init/SKILL.md" ] || { echo "tests: .claude/skills link does not resolve with an absolute AIFIER_DIR"; cat "$work/install-absolute-dir.out"; fail=1; }
 # gate.sh decides from the payload alone (--from): the gh shim is never reached
 for fx in tests/fixtures/issues/*.json; do
   name="issue-$(basename "$fx" .json)"
