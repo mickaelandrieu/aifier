@@ -10,7 +10,7 @@ It is a method first and a toolkit second. Everything it installs is plain Markd
 versioned in your repo, and portable across Claude Code, opencode and pi.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Status: early design](https://img.shields.io/badge/status-early%20design-orange.svg)](#status)
+[![Status: alpha](https://img.shields.io/badge/status-alpha-orange.svg)](#status)
 
 ---
 
@@ -106,7 +106,7 @@ What `init` renders into your project:
 | `AGENTS.md` | the constitution: a short map, rules that apply everywhere, pointers to area guides |
 | `aifier.yml` | repo, branches, label prefix, gates, language, chosen guards |
 | Skills | run by your engine as slash commands: the cycle (`/qualify`, `/plan`, `/build`, each stopping at its gate), the transverse ones (`/assess`, `/gates`, `/context`, `/compound`, `/status`), plus knowledge skills (proof discipline, review checklist, adversarial test plan, ADR and documentation rules) |
-| Guards | standalone hooks for your engine that constrain what the model reads and writes: protected paths, forbidden git operations, secrets, a required verification section before the agent stops |
+| Guards | not yet: standalone hooks per engine (protected paths, forbidden git operations, secrets, a required verification section before the agent stops) come with a later release; today the constitution and the skills state the rules and the reviewer checks them |
 | Memory | the learned-rules catalogue, the decision journal (ADRs) and the session handoff file, all plain Markdown in git |
 | Workflow | two-audience issue templates, a PR template with a validation section, workflow labels |
 
@@ -126,9 +126,10 @@ The skills, once in your project:
 
 ## How it works
 
-1. **Install and init.** One `curl | sh`, then `aifier init`. aifier detects your stack,
-   architecture decisions, CI and engines, shows the manifest it inferred, asks the rest, and
-   renders. Existing files are never overwritten silently.
+1. **Install and init.** One `curl | sh` puts the skills and the `aifier` binary in your
+   repository; then `/init` in your agent detects your stack, decisions, CI and engines, shows
+   the `aifier.yml` it inferred, asks the rest, and renders with the binary. Existing files are
+   never overwritten silently.
 2. **Assess.** Run `/assess` in your engine. You get a profile over the eleven phases, prioritised
    gaps and risks. It reads files, git history and the forge; it changes nothing.
 3. **Gates.** Run `/gates`. From now on every agent deliverable ends with the captured output of
@@ -208,9 +209,8 @@ without an `approach:` reply waits, an issue already in progress asks before res
   `BLOCKED`. Reviews cannot approve a PR with conflicts or failing checks.
 - **Mistakes that do not come back.** A bug seen twice is a hole in the system. The rule catalogue
   closes it for every agent, in every session, from the next run.
-- **One setup, any engine.** The knowledge lives in portable `SKILL.md` files and the guards are
-  rendered for Claude Code, opencode or pi. Switch engine, or run two, without rewriting your
-  context.
+- **One setup, any engine.** The knowledge lives in portable `SKILL.md` files that Claude Code,
+  opencode and pi all load. Switch engine, or run two, without rewriting your context.
 - **A measurable starting point.** `assess` gives you a score you can re-run after each change.
   Teams following this method report fewer correction iterations after about ten cycles
   ([source](https://www.sfeir.com/concepts/sdlc-augmente/)); the grid lets you check that on
@@ -236,29 +236,37 @@ The method pages live in [`method/`](method/), starting with the
 ## Layout
 
 ```
-install.sh       one-line installer: copies skills/ into .agents/skills/
-method/          the method, one page per phase and per concept
-skills/          the portable skills: assess, init, the cycle (qualify, plan, build) and the knowledge skills rendered into your project
-src/             the aifier binary (Rust): `aifier render`, the renderer init calls; update, remove and guards follow
+install.sh       one-line installer: skills into .agents/skills/, the binary of the tag into .aifier/bin/
+method/          the method (French): the eleven phases and the assess grid
+skills/          the portable skills: assess, init, gates, context, status, gate, the cycle (qualify, plan, build) and the knowledge skills; each collector is a bash script next to its SKILL.md
+src/             the aifier binary (Rust): `aifier render`, the only renderer init calls; update, remove and guards follow
 templates/       files init renders (constitution, area guides, templates, memory, aifier.yml)
-packs/           optional stack packs (python-hexagonal, react, playwright, ...)
-adapters/        V2: per-engine guards and memory for Claude Code, opencode and pi
+tests/           synthetic repositories, issue payloads and golden outputs for every collector and the renderer
+docs/            this repository's own memory: learned rules, decisions (ADRs), session handoff
+packs/, adapters/   placeholders for stack packs and per-engine guards, empty today
 ```
 
 ## Status
 
-**V1, skill-based.** `install.sh` copies the skills into `.agents/skills/`; `/assess` and
-`/init` run inside the engine, with deterministic scripts for evidence (`skills/assess/probes.sh`)
-and detection (`skills/init/detect.sh`). `/assess` has been run end to end on a production
-codebase and on a classic project; `/init` has been rendered on the latter. Guards and the
-standalone generator binary are V2, specified in
-[issue #1](https://github.com/mickaelandrieu/aifier/issues/1); `/gates`, `/context`,
-`/compound` and `/status` are issues #3 to #6. All of it is distilled from an agent framework that has run for months on a
-production GenAI platform, with a label-driven workflow, a proof discipline and a catalogue of
-twenty-plus learned rules.
+**Alpha, towards `v0.1.0`.** What exists and is tested:
 
-Star the repository to follow the first release, and open an issue if you want to run the grid
-on your own codebase before the generator lands.
+- the installer, POSIX `sh`, which copies the skills and downloads the binary of a tagged release
+  with its checksum verified;
+- fifteen skills: `assess`, `init`, `gates`, `context`, `status`, `gate`, the cycle (`qualify`,
+  `plan`, `build`) and the knowledge skills, each one blind-run before shipping; the cycle has
+  run end to end on this repository (issue #13: qualified, planned, built in two slices, merged);
+- the collectors in bash (`detect.sh`, `probes.sh`, `status.sh`, `gate.sh`, `run.sh`), diffed
+  against golden outputs on five synthetic repositories in CI;
+- the `aifier` binary with its first subcommand, `render`, byte-identical to the renderer it
+  replaced, built for Linux and macOS on every tag ([ADR 0002](docs/decisions/0002-aifier-binary.md)).
+
+What does not exist yet: the guards (per-engine hooks), `aifier update` and `aifier remove`,
+native Windows, stack packs. Using aifier needs a POSIX shell, `git`, `curl`, `tar`, and `gh`
+with `jq` for the forge; developing it needs a Rust toolchain.
+
+aifier uses aifier: this repository was set up with `/init`, its issues go through `/qualify`,
+`/plan` and `/build`, its lessons are in [docs/learned-rules.md](docs/learned-rules.md). Open an
+issue to run the grid on your own codebase, or to report a friction in a skill.
 
 ## License
 
