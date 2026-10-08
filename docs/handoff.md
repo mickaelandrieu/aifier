@@ -17,5 +17,8 @@ goal, what is done and proven, what is blocked, the next step.
   on this repository; the blocks are quoted in the pull request.
 - Not done: per-engine guards, `aifier update` and `remove`, native Windows, stack packs, the
   cycle skills on GitLab; the blind runs of the skills edited here (RULE-006) are the reviewer's.
-- Next: a human merges, then the maintainer pushes the first tag `v0.1.0` (`release.yml` builds
+- Released: `v0.1.0` on 2026-10-08, four binaries published with `SHA256SUMS`; the README install
+  line verified on a clean repository (latest tag picked, sha256 verified, 16 skills, binary 0.1.0).
+- Next: blind runs of the edited skills on a target repository installed from the release (RULE-006);
+  then `aifier update` and `remove`, guards, Windows.
   the four targets and the installer picks it by default).
