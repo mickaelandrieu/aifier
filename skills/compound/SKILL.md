@@ -87,3 +87,7 @@ Escaped gate (Compound-2): <gate> — <why it did not catch this>
 
 If nothing survives de-duplication and admission, say so. A clean session yields nothing, and that
 is a valid outcome; do not invent a rule to have something to show.
+
+Proof: the report quotes the diff of `{{memory.rules}}` (`git diff -- {{memory.rules}}`, or
+"no change") and the next free id as read in Step 2. Say `BLOCKED: <reason>` when
+`{{memory.rules}}` is absent: run `init` first, do not create the catalogue here.

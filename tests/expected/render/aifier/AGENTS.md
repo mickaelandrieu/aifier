@@ -31,6 +31,9 @@ start, update before stopping). Configuration of the cycle: [aifier.yml](aifier.
 
 ## Gates
 
+Run them all: `bash <skills dir>/gates/run.sh aifier.yml --preflight` (`.agents/skills` by
+default). Per area:
+
 From the root:
 
 ```bash

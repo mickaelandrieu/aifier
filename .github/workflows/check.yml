@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: lint the skills, the templates, the installer and the scripts
+        run: bash tests/lint.sh
       - name: the aifier binary (format, lint, unit tests, release build as release.yml builds it)
         run: |
           cargo fmt --check

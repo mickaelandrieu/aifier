@@ -101,7 +101,7 @@ Health gate: mergeable=<value> · failing checks=<none|list> · base=<branch>
 
 ### Required actions before merge   (numbered, or "None.")
 ### Recommended follow-ups
-### Commands to run                 ($ {{gates.test}} <scope>)
+### Commands to run                 ($ {{gates.test}} → exit code, last line; name the scope in words)
 ### Learned-rule candidates
 - <finding> → repeatable pattern with a detection? yes: propose RULE / no: why not
 ```

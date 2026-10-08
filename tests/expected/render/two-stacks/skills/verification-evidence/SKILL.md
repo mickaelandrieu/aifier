@@ -50,9 +50,9 @@ Example:
 
 ```
 ## Verification Run
-$ ruff check . && ruff format --check .        → All checks passed
-$ mypy .   → Success: no issues found in 212 files
-$ pytest tests/unit/orders -q   → 48 passed in 2.3s
+$ ruff check . && ruff format --check .        → exit 0, last line: "lint: OK"
+$ mypy .   → exit 0, last line: "no issues found"
+$ pytest        → exit 0, last line: "tests: OK"
 Integration tests: BLOCKED — database unreachable (DB_HOST unset). Must run in CI before merge.
 ```
 

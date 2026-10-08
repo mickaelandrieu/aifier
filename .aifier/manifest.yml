@@ -1,18 +1,23 @@
-version: v1
-rendered_on: 2026-10-07
+ref: main
+date: 2026-10-07
 rendered:
   - AGENTS.md
   - CLAUDE.md
   - aifier.yml
   - .github/ISSUE_TEMPLATE/change.yml
   - .github/PULL_REQUEST_TEMPLATE.md
-  - .github/workflows/check.yml
   - docs/learned-rules.md
   - docs/decisions/README.md
   - docs/decisions/0000-template.md
-  - docs/decisions/0001-v1-skill-based.md
   - docs/handoff.md
 skipped: []
 not_rendered:
-  - guards: not available in V1
-  - labels: not created on the forge; command printed by init
+  - guards: not available yet
+  - labels: created on 2026-10-07
+answers:
+  - engines: claude-code, opencode, pi
+  - target branch: main (the default)
+  - language: en
+  - label prefix: sdlc
+  - protected paths: templates/, skills/*/SKILL.md
+  - existing files: none

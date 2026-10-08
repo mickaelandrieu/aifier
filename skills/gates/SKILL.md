@@ -12,8 +12,10 @@ output. Load the `verification-evidence` skill first if it is installed.
 Read `aifier.yml`. If it does not exist, run the detection of `init` first:
 
 ```bash
-bash "<skills dir>/init/detect.sh" . > "$OUT/draft.yml"
+bash "<directory of this SKILL.md>/../init/detect.sh" . > "$OUT/draft.yml"
 ```
+
+`$OUT` is a directory outside the repository.
 
 For every area, list the four families (lint, typecheck, test, build) with the command or
 `null`. For each `null`, look for a command detection missed: scripts in the manifest, a
@@ -40,7 +42,8 @@ Show the table and ask the person to confirm or correct each command, and to ans
 bash "<directory of this SKILL.md>/run.sh" aifier.yml --compare-ci --area none
 ```
 
-Every declared gate that CI does not run is a finding; every CI step that is not a declared
+`--area none` is the sentinel for "compare only": the runner matches no area, so it runs no gate
+and prints the comparison alone. Every declared gate that CI does not run is a finding; every CI step that is not a declared
 gate is a question. Propose the CI change (a job per missing family, and the check names to
 require in branch protection), do not apply it without a yes.
 
@@ -61,8 +64,19 @@ The runner needs `bash` and the usual Unix tools; when `run.sh` cannot start, sa
 ## Step 5 — Make it stick
 
 - Add the block format to the PR template's Verification section if it is not there.
-- Add to the constitution's Gates section the runner command, so every agent uses it.
+- The constitution's Gates section keeps the raw commands per area (the template renders them
+  from `aifier.yml`); add once, above them, the runner line
+  `bash <skills dir>/gates/run.sh aifier.yml --preflight`, so every agent uses it.
 - Add `.aifier/gates/` to `.gitignore`: logs are evidence for the session, not for the repository.
 
-Report in eight lines: declared gates per area, gaps, CI differences, preflight items, the
-verdict of the run, and what needs the person (CI change, missing tool).
+## Report
+
+```
+## Gates — <date>
+Declared: <area>: lint <cmd|none>, typecheck <…>, test <…>, build <…>   (one line per area)
+Gaps: <family without a tool, per area | none>
+CI: <declared gates CI does not run | CI steps that are not gates | in sync>
+Preflight: <items>
+Run: <the ## Verification Run block of Step 4, verbatim> | BLOCKED (<reason>)
+Needs the person: <CI change, missing tool | nothing>
+```

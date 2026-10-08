@@ -23,12 +23,13 @@ passed as `AIFIER_SRC`.
 
 Then, in your coding agent:
 
-1. `/assess` measures where the repository stands. It changes nothing.
+1. `/assess` measures where the repository stands. It writes one report under `.aifier/` and
+   nothing else.
 2. `/init` sets it up: it detects your stack, asks what it cannot guess, and renders the files.
 3. `/gates` declares lint, typecheck, tests and build, so every agent proves its work.
 4. For each issue: `/qualify`, `/plan`, `/build`. See [the cycle](#the-cycle).
 
-Needs macOS, Linux, WSL or Git Bash with `git`, `curl` and `tar`; `gh` and `jq` to read your
+Needs macOS, Linux, WSL or Git Bash with `git`, `curl` and `tar`; `jq` always, `gh` to read your
 forge. No Python, Node or Rust.
 
 <details><summary>Installer options</summary>
@@ -38,8 +39,9 @@ The installer writes four things: the skills in `.agents/skills/`, the `aifier` 
 `.claude/skills` symlink to the skills directory, created only when nothing is there yet.
 `AIFIER_REF=v1.2.3` pins a release (a branch carries no binary), `AIFIER_DIR` changes the skills
 directory, `AIFIER_SRC=/path/to/clone` installs from a local checkout (`AIFIER_BIN` names its
-built binary when cargo put it elsewhere than `target/release/`). Run it again to update. Delete
-the four to remove.
+built binary when cargo put it elsewhere than `target/release/`). Run it again to update, then
+`/init` again: it re-renders the skills and skips the files you already have. Delete the four to
+remove.
 
 </details>
 
@@ -59,7 +61,8 @@ the four to remove.
 | `/status` | session start | Where the project stands, and the next gap. |
 
 Agents also load the knowledge skills: proof discipline, review checklist, adversarial test
-plan, process rules, decision records, documentation rules.
+plan, process rules, decision records, documentation rules. The cycle skills (`/qualify`, `/plan`,
+`/build`, `/gate`) read and write the forge through `gh`: they are GitHub-only in v0.1.0.
 
 ## The cycle
 
@@ -93,20 +96,22 @@ gates, two capitalisations. Related concepts:
 [CDLC](https://www.sfeir.com/concepts/cdlc/),
 [issue-based development](https://www.sfeir.com/concepts/issue-based-development/),
 [context flywheel](https://www.sfeir.com/concepts/context-flywheel/). The method pages are in
-[`method/`](method/).
+[`method/`](method/), in English like everything else here.
 
 ## Status
 
-Alpha, towards `v0.1.0`. Shipped: the installer, fifteen skills, the bash collectors tested
+Alpha, towards `v0.1.0`. Shipped: the installer, sixteen skills, the bash collectors tested
 against golden outputs, and the `aifier` binary with `render`, built for Linux and macOS on every
 tag ([ADR 0002](docs/decisions/0002-aifier-binary.md)). Not yet: per-engine guards,
-`aifier update` and `remove`, native Windows, stack packs.
+`aifier update` and `remove`, native Windows, stack packs, GitLab for the cycle skills. See the
+[changelog](CHANGELOG.md).
 
 aifier uses aifier: this repository was set up with `/init` and its issues go through the cycle.
 Open an issue to run the grid on your codebase or to report a friction in a skill.
 
 Layout: `install.sh`, `skills/` (one directory per skill, collectors in bash next to the
-`SKILL.md`), `templates/`, `src/` (the binary), `method/` (French), `tests/`, `docs/`.
+`SKILL.md`), `templates/`, `src/` (the binary), `method/`, `tests/`, `docs/`. Guards and stack
+packs are planned and have no directory yet.
 
 ## License
 

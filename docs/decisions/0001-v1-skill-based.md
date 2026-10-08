@@ -1,6 +1,6 @@
 # 0001 — V1 is skill-based; the standalone binary is V2
 
-Status: accepted · Date: 2026-10-07
+Status: accepted, amended by 0002 (the binary ships inside V1, one subcommand at a time) · Date: 2026-10-07
 
 ## Context
 

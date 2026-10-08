@@ -17,7 +17,7 @@
 - handoff: docs/handoff.md ABSENT
 - drift: no .aifier/manifest.yml
 - last gates run: none
-- update: re-run the install line to refresh the skills
+- update: re-run the install line, then /init again: it re-renders the skills and skips the files you already have
 exit: 0
 ### status.sh --min "Governed cycle"
 # aifier status · status-fx · DATE
@@ -38,7 +38,7 @@ exit: 0
 - handoff: docs/handoff.md ABSENT
 - drift: no .aifier/manifest.yml
 - last gates run: none
-- update: re-run the install line to refresh the skills
+- update: re-run the install line, then /init again: it re-renders the skills and skips the files you already have
 
 status: BELOW minimum (Governed cycle)
 exit: 3
@@ -61,7 +61,7 @@ exit: 3
 - handoff: docs/handoff.md ABSENT
 - drift: no .aifier/manifest.yml
 - last gates run: none
-- update: re-run the install line to refresh the skills
+- update: re-run the install line, then /init again: it re-renders the skills and skips the files you already have
 
 status: at or above minimum (Cycle outillé)
 exit: 0
@@ -84,6 +84,6 @@ exit: 0
 - handoff: docs/handoff.md ABSENT
 - drift: no .aifier/manifest.yml
 - last gates run: none
-- update: re-run the install line to refresh the skills
+- update: re-run the install line, then /init again: it re-renders the skills and skips the files you already have
 unknown --min 'bogus'
 exit: 2

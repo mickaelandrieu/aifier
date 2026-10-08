@@ -2,7 +2,7 @@
 name = "aifier"
 version = "0.1.0"
 edition = "2021"
-description = "aifier binary (V2): renders the files init puts into a repository; update and remove come next"
+description = "aifier binary: renders the files init puts into a repository; update and remove come next"
 license = "MIT"
 repository = "https://github.com/mickaelandrieu/aifier"
 publish = false

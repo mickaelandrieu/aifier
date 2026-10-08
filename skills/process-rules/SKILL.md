@@ -59,7 +59,7 @@ violation unless the call itself is the contract (event emission, audit).
 Rule: never claim a gate passed without the exact command and the tail of its real output in the
 deliverable; a gate that cannot run is `BLOCKED: <reason>`, never `PASS`, never a weaker proxy.
 Wrong: "Integration tests pass." with no run; a type check presented as the test suite.
-Right: a `## Verification Run` section: `$ {{gates.test}} tests/unit -q → 48 passed`,
+Right: a `## Verification Run` section: `$ {{gates.test}} → exit 0, last line: "tests: OK"`,
 `Integration: BLOCKED — database unreachable; run in CI`.
 Detection: `grep -Ein 'all green|tests? pass|validated|works now' <deliverable>` with no adjacent
 captured output.
